@@ -17,14 +17,31 @@ switcher = {
 
 class Drone(ABC):
     @abstractmethod
-    def __init__(self, uri: str, color: str, master: bool):
-        self.uri = uri
-        self.data = {}
+    def __init__(self, id: str, color: str, master: bool):
+        self.id = id
+        self.master = master
+        
+        self.batteryVoltage = 0.0
+        self.isCharging = False
+
+        self.isFlying = False
+        self.isTumbled = False
+
+        self.locationX = 0
+        self.locationY = 0
+        self.locationZ = 0
+
+        self.distanceDown = 0
+        self.distanceUp = 0
+        self.distanceFront = 0
+        self.distanceBack = 0
+        self.distanceLeft = 0
+        self.distanceRight = 0
 
         try:
             self.color = switcher[color]
         except:
-            prfloat(f'Color needs to be on of the following color: {switcher.keys()}')
+            print(f'Color needs to be on of the following color: {switcher.keys()}')
             raise ValueError
 
     @abstractmethod
@@ -42,9 +59,6 @@ class Drone(ABC):
     @abstractmethod
     def addLogger(self) -> None:
         pass
-
-    def getData(self) -> object:
-        return self.data
 
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:

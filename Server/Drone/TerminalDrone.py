@@ -1,51 +1,62 @@
-from .Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
+from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
 
 class TerminalDrone(Drone):
-    def __init__(self, uri: str, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(uri, color, master)
+    def __init__(self, id: str, color: str, master: bool = DEFUALT_MASTER):
+        super().__init__(id, color, master)
 
     def connect(self) -> None:
-        print("Connecting...")
+        print('Connecting...')
 
     def isConnected(self) -> None:
-        print("Connected")
+        print('Connected')
         return True
 
     def kill(self) -> None:
-        print("Killed...")
+        print('Killed...')
 
     def addLogger(self) -> None:
         pass
 
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Taking off...")
+        self.isFlying = True
+        print('Taking off...')
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Landing...")
+        if self.isFlying:
+            print('Landing...')
 
     def stop(self) -> None:
-        print("Hovering...")
+        if self.isFlying:
+            print('Hovering...')
 
     def up(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving up...")
+        if self.isFlying:
+            print('Moving up...')
 
     def down(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving down...")
+        if self.isFlying:
+            print('Moving down...')
 
     def forward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving forward...")
+        if self.isFlying:
+            print('Moving forward...')
 
     def backward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving backwards...")
+        if self.isFlying:
+            print('Moving backwards...')
 
     def left(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving left...")
+        if self.isFlying:
+            print('Moving left...')
 
     def right(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Moving right...")
+        if self.isFlying:
+            print('Moving right...')
 
     def turnLeft(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Turning left...")
+        if self.isFlying:
+            print('Turning left...')
 
     def turnRight(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        print("Turning right...")
+        if self.isFlying:
+            print('Turning right...')

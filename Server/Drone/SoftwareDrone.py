@@ -1,8 +1,8 @@
-from .Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
+from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
 
 class SoftwareDrone(Drone):
-    def __init__(self, uri: str, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(uri, color)
+    def __init__(self, id: str, color: str, master: bool = DEFUALT_MASTER):
+        super().__init__(id, color)
 
     def connect(self) -> None:
         pass

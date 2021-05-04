@@ -1,4 +1,4 @@
-from ..Drone.Drone import Drone
+from Server.Drone.Drone import Drone
 
 class Swarm:
     def __init__(self):
@@ -17,3 +17,5 @@ class Swarm:
                 return False
 
         return True
+
+    # Hier moet de code komen om de drones in de swarm aan te sturen

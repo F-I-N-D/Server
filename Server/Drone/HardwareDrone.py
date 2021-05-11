@@ -12,12 +12,13 @@ class HardwareDrone(Drone):
         self.powerSwitch = PowerSwitch(self.id)
         self.motionCommander = MotionCommander(self.crazyflie)
 
-        self.log_conf = LogConfig(name='data', period_in_ms = 50)
+        self.log_conf = LogConfig(name='data', period_in_ms = 500)
         self.log_conf.add_variable('pm.vbat', 'float')
         self.log_conf.add_variable('pm.state', 'int8_t')
         self.log_conf.add_variable('sys.isFlying', 'uint8_t')
         self.log_conf.add_variable('sys.isTumbled', 'uint8_t')
         self.log_conf.add_variable('range.zrange', 'uint16_t')
+        self.log_conf.add_variable('sensor.ldr', 'uint16_t')
 
         if master:
             self.log_conf.add_variable('range.up', 'uint16_t')
@@ -28,9 +29,13 @@ class HardwareDrone(Drone):
 
 
     def connect(self) -> None:
+        print(self.id)
         self.crazyflie.open_link(self.id)
 
     def isConnected(self) -> bool:
+        print(self.crazyflie.is_connected())
+        print(self.crazyflie.state)
+        print(self.crazyflie.connected_ts)
         return self.crazyflie.is_connected()
 
     def kill(self) -> None:

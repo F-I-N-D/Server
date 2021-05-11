@@ -1,4 +1,5 @@
 from Server.Drone.Drone import Drone
+import operator
 
 class Swarm:
     def __init__(self):
@@ -17,5 +18,8 @@ class Swarm:
                 return False
 
         return True
+
+    def search(self) -> None:
+        map(operator.methodcaller('takeOff'), self.drones)
 
     # Hier moet de code komen om de drones in de swarm aan te sturen

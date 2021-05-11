@@ -23,7 +23,7 @@ class Server:
         self.socket = Socket(8000)
 
     def start(self) -> None:
-        droneMaster = HardwareDrone(idMaster, 'white', True)
+        droneMaster = HardwareDrone(idTwo, 'white', True)
         self.swarm.addDrone(droneMaster)
         self.gps.addDrone(droneMaster)
         self.socket.addHardwareDrone(droneMaster)
@@ -34,6 +34,12 @@ class Server:
         self.gps.start()
         
         self.swarm.connect()
-        self.swarm.isConnected()
+
+        while not self.swarm.isConnected():
+            time.sleep(0.5)
         
+        print('Connected')
+
+        self.swarm.search()
+
         self.gps.stop()

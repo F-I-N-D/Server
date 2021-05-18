@@ -7,6 +7,7 @@ from Server.Socket.Socket import Socket
 from Server.Drone.HardwareDrone import HardwareDrone
 from Server.Drone.SoftwareDrone import SoftwareDrone
 from Server.Drone.TerminalDrone import TerminalDrone
+from Server.Logger.Logger import Logger
 
 idMaster = 'E7E7E7E700'
 idOne = 'E7E7E7E701'
@@ -20,11 +21,14 @@ class Server:
         self.swarm = Swarm()
         self.gps = GPS()
         self.socket = Socket(8000)
+        self.logger = Logger()
 
     def start(self) -> None:
         cflib.crtp.init_drivers()
 
-        droneMaster = HardwareDrone(idMaster, 'white', True)
+        self.logger.info("Start")
+
+        droneMaster = HardwareDrone(idMaster, self.logger, 'white', True)
         self.swarm.addDrone(droneMaster)
         self.gps.addDrone(droneMaster)
         self.socket.addHardwareDrone(droneMaster)
@@ -52,4 +56,7 @@ class Server:
 
         # self.swarm.search()
 
+        self.logger.info("End")
+
         self.gps.stop()
+        self.logger.close()

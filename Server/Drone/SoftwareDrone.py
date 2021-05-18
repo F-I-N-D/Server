@@ -1,8 +1,9 @@
 from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_RATE, DEFUALT_MASTER
+from Server.Logger.Logger import Logger
 
 class SoftwareDrone(Drone):
-    def __init__(self, droneId: str, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(droneId, color)
+    def __init__(self, droneId: str, logger: Logger, color: str, master: bool = DEFUALT_MASTER):
+        super().__init__(droneId, logger, color)
 
     def connect(self) -> None:
         pass
@@ -14,9 +15,6 @@ class SoftwareDrone(Drone):
         pass
 
     def kill(self) -> None:
-        pass
-
-    def addLogger(self) -> None:
         pass
 
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:

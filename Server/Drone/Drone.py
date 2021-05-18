@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from Server.Logger.Logger import Logger
 
 DEFAULT_VELOCITY = 0.25
 DEFAULT_RATE = 36
@@ -18,9 +19,10 @@ switcher = {
 
 class Drone(ABC):
     @abstractmethod
-    def __init__(self, droneId: str, color: str, master: bool):
+    def __init__(self, droneId: str, logger: Logger, color: str, master: bool):
         self.droneId = droneId
         self.master = master
+        self.logger = logger
         
         self.batteryVoltage = 0.0
         self.isCharging = False
@@ -49,7 +51,7 @@ class Drone(ABC):
 
     @abstractmethod
     def connect(self) -> None:
-        pass
+        self.logger.info("Connect", self.droneId)
 
     @abstractmethod
     def isConnected(self) -> bool:
@@ -57,15 +59,11 @@ class Drone(ABC):
 
     @abstractmethod
     def disconnect(self) -> None:
-        pass
+        self.logger.info("Disconnect", self.droneId)
 
     @abstractmethod
     def kill(self) -> None:
-        pass
-
-    @abstractmethod
-    def addLogger(self) -> None:
-        pass
+        self.logger.critical("Killed", self.droneId)
 
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:

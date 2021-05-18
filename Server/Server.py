@@ -17,29 +17,39 @@ logging.basicConfig(level=logging.ERROR)
 
 class Server:
     def __init__(self):
-        cflib.crtp.init_drivers()
         self.swarm = Swarm()
         self.gps = GPS()
         self.socket = Socket(8000)
 
     def start(self) -> None:
-        droneMaster = HardwareDrone(idTwo, 'white', True)
+        cflib.crtp.init_drivers()
+
+        droneMaster = HardwareDrone(idMaster, 'white', True)
         self.swarm.addDrone(droneMaster)
         self.gps.addDrone(droneMaster)
         self.socket.addHardwareDrone(droneMaster)
 
-        droneThree = TerminalDrone(idThree, 'cyan')
-        self.swarm.addDrone(droneThree)
+        # droneTwo = HardwareDrone(idTwo, 'red')
+        # self.swarm.addDrone(droneTwo)
+        # self.gps.addDrone(droneTwo)
+        # self.socket.addHardwareDrone(droneTwo)
+
+        # droneThree = TerminalDrone(idThree, 'cyan')
+        # self.swarm.addDrone(droneThree)
         
         self.gps.start()
-        
+        # self.socket.start()
+
         self.swarm.connect()
 
         while not self.swarm.isConnected():
+            print('Connecting')
             time.sleep(0.5)
         
+        droneMaster.addLogger()
+
         print('Connected')
 
-        self.swarm.search()
+        # self.swarm.search()
 
         self.gps.stop()

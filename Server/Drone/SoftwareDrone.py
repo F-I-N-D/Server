@@ -1,13 +1,16 @@
-from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
+from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_RATE, DEFUALT_MASTER
 
 class SoftwareDrone(Drone):
-    def __init__(self, id: str, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(id, color)
+    def __init__(self, droneId: str, color: str, master: bool = DEFUALT_MASTER):
+        super().__init__(droneId, color)
 
     def connect(self) -> None:
         pass
 
     def isConnected(self) -> bool:
+        pass
+
+    def disconnect(self) -> None:
         pass
 
     def kill(self) -> None:
@@ -43,8 +46,8 @@ class SoftwareDrone(Drone):
     def right(self, velocity: float = DEFAULT_VELOCITY) -> None:
         pass
 
-    def turnLeft(self, velocity: float = DEFAULT_VELOCITY) -> None:
+    def turnLeft(self, rate: float = DEFAULT_RATE) -> None:
         pass
 
-    def turnRight(self, velocity: float = DEFAULT_VELOCITY) -> None:
+    def turnRight(self, rate: float = DEFAULT_RATE) -> None:
         pass

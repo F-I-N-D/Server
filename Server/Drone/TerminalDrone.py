@@ -1,8 +1,8 @@
-from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFUALT_MASTER
+from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_RATE, DEFUALT_MASTER
 
 class TerminalDrone(Drone):
-    def __init__(self, id: str, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(id, color, master)
+    def __init__(self, droneId: str, color: str, master: bool = DEFUALT_MASTER):
+        super().__init__(droneId, color, master)
 
     def connect(self) -> None:
         print('Connecting...')
@@ -10,6 +10,9 @@ class TerminalDrone(Drone):
     def isConnected(self) -> None:
         print('Connected')
         return True
+
+    def disconnect(self) -> None:
+        print('Disconnected')
 
     def kill(self) -> None:
         print('Killed...')
@@ -53,10 +56,10 @@ class TerminalDrone(Drone):
         if self.isFlying:
             print('Moving right...')
 
-    def turnLeft(self, velocity: float = DEFAULT_VELOCITY) -> None:
+    def turnLeft(self, rate: float = DEFAULT_RATE) -> None:
         if self.isFlying:
             print('Turning left...')
 
-    def turnRight(self, velocity: float = DEFAULT_VELOCITY) -> None:
+    def turnRight(self, rate: float = DEFAULT_RATE) -> None:
         if self.isFlying:
             print('Turning right...')

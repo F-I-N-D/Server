@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 DEFAULT_VELOCITY = 0.25
-DEFAULT_HEIGHT = 0.1
+DEFAULT_RATE = 36
+DEFAULT_HEIGHT = 0.4
 DEFUALT_MASTER = False
 
 switcher = {
@@ -17,8 +18,8 @@ switcher = {
 
 class Drone(ABC):
     @abstractmethod
-    def __init__(self, id: str, color: str, master: bool):
-        self.id = id
+    def __init__(self, droneId: str, color: str, master: bool):
+        self.droneId = droneId
         self.master = master
         
         self.batteryVoltage = 0.0
@@ -38,6 +39,8 @@ class Drone(ABC):
         self.distanceLeft = 0
         self.distanceRight = 0
 
+        self.ldr = 0
+
         try:
             self.color = switcher[color]
         except:
@@ -50,6 +53,10 @@ class Drone(ABC):
 
     @abstractmethod
     def isConnected(self) -> bool:
+        pass
+
+    @abstractmethod
+    def disconnect(self) -> None:
         pass
 
     @abstractmethod
@@ -97,9 +104,9 @@ class Drone(ABC):
         pass
 
     @abstractmethod
-    def turnLeft(self, velocity: float) -> None:
+    def turnLeft(self, rate: float) -> None:
         pass
 
     @abstractmethod
-    def turnRight(self, velocity: float) -> None:
+    def turnRight(self, rate: float) -> None:
         pass

@@ -17,7 +17,8 @@ class GPS(Thread):
     def run(self):
         self.__isRunnning = True
         while True and self.__isRunnning:
-            pass
+            time.sleep(10)
+            # pass
             # Hier openCV code plaatsen
             # De drones zijn op te halen in de self.drones
             # Voorbeeld:

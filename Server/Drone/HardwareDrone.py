@@ -6,8 +6,8 @@ from cflib.utils.power_switch import PowerSwitch
 from Server.Logger.Logger import Logger
 
 class HardwareDrone(Drone):
-    def __init__(self, droneId: str, logger: Logger, color: str, master: bool = DEFUALT_MASTER):
-        super().__init__(f'radio://0/20/2M/{droneId}', logger, color, master)
+    def __init__(self, droneId: str, logger: Logger, colorFront: str, colorBack: str, master: bool = DEFUALT_MASTER):
+        super().__init__(f'radio://0/20/2M/{droneId}', logger, colorFront, colorBack, master)
         self.crazyflie = Crazyflie()
         self.powerSwitch = PowerSwitch(self.droneId)
         self.motionCommander = MotionCommander(self.crazyflie)
@@ -27,13 +27,16 @@ class HardwareDrone(Drone):
             self.log_conf.add_variable('range.left', 'uint16_t')
             self.log_conf.add_variable('range.right', 'uint16_t')
 
-
     def connect(self) -> None:
         super().connect()
         self.crazyflie.open_link(self.droneId)
 
     def isConnected(self) -> bool:
         super().isConnected()
+        if self.crazyflie.is_connected():
+            self.logger.info("Connected", self.droneId)
+            self.addLogger()
+
         return self.crazyflie.is_connected()
 
     def disconnect(self) -> None:
@@ -57,7 +60,7 @@ class HardwareDrone(Drone):
         self.isTumbled = True if data['sys.isTumbled'] == 1 else False
 
         self.distanceDown = data['range.zrange']
-        self.z = data['range.zrange'] / 10
+        self.locationZ = int(data['range.zrange'] / 10)
 
         self.ldr = data['ExternalSensors.LDR']
 
@@ -71,12 +74,22 @@ class HardwareDrone(Drone):
         if self.isTumbled or self.isCharging:
             self.kill()
 
+        if self.batteryVoltage < 2.8 and self.batteryVoltage > 0.0:
+            self.logger.warning("Battery low", self.droneId)
+            self.land()
+            self.disconnect()
+
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().takeOff()
+        super().takeOff(height, velocity)
+        if self.batteryVoltage < 3.5 and self.batteryVoltage > 0.0:
+            self.logger.warning("Battery low", self.droneId)
+            self.disconnect()
+            return
+
         self.motionCommander.take_off(height, velocity)
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().land()
+        super().land(velocity)
         self.motionCommander.land(velocity)
 
     def stop(self) -> None:
@@ -84,33 +97,37 @@ class HardwareDrone(Drone):
         self.motionCommander.stop()
 
     def up(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().up()
+        super().up(velocity)
         self.motionCommander.start_up(velocity)
 
     def down(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().down()
+        super().down(velocity)
         self.motionCommander.start_down(velocity)
 
     def forward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().forward()
+        super().forward(velocity)
         self.motionCommander.start_forward(velocity)
 
     def backward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().backward()
+        super().backward(velocity)
         self.motionCommander.start_back(velocity)
 
     def left(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().left()
+        super().left(velocity)
         self.motionCommander.start_left(velocity)
 
     def right(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().right()
+        super().right(velocity)
         self.motionCommander.start_right(velocity)
 
     def turnLeft(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnLeft()
+        super().turnLeft(rate)
         self.motionCommander.start_turn_left(rate)
 
     def turnRight(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnRight()
+        super().turnRight(rate)
         self.motionCommander.start_turn_right(rate)
+
+    def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
+        super().move(velocityX, velocityY, velocityZ, rate)
+        self.motionCommander._set_vel_setpoint(velocityX, velocityY, velocityZ, rate)

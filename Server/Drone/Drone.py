@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from Server.Logger.Logger import Logger
 
-DEFAULT_VELOCITY = 0.25
-DEFAULT_RATE = 36
+DEFAULT_VELOCITY = 0.5
+DEFAULT_MIN_VELOCITY = 0.1
+DEFAULT_RATE = 15
 DEFAULT_HEIGHT = 0.4
 DEFUALT_MASTER = False
 
@@ -19,11 +20,11 @@ switcher = {
 
 class Drone(ABC):
     @abstractmethod
-    def __init__(self, droneId: str, logger: Logger, color: str, master: bool):
+    def __init__(self, droneId: str, logger: Logger, colorFront: str, colorBack: str, master: bool):
         self.droneId = droneId
         self.master = master
         self.logger = logger
-        
+
         self.batteryVoltage = 0.0
         self.isCharging = False
 
@@ -33,6 +34,7 @@ class Drone(ABC):
         self.locationX = 0
         self.locationY = 0
         self.locationZ = 0
+        self.direction = 0
 
         self.distanceDown = 0
         self.distanceUp = 0
@@ -44,7 +46,8 @@ class Drone(ABC):
         self.ldr = 0
 
         try:
-            self.color = switcher[color]
+            self.colorFront = switcher[colorFront]
+            self.colorBack = switcher[colorBack]
         except:
             print(f'Color needs to be on of the following color: {switcher.keys()}')
             raise ValueError
@@ -60,6 +63,27 @@ class Drone(ABC):
     @abstractmethod
     def disconnect(self) -> None:
         self.logger.info("Disconnect", self.droneId)
+
+    def logData(self) -> None:
+        self.logger.info(f"Battery: {self.batteryVoltage}V", self.droneId)
+        self.logger.info(f"Is charging: {self.isCharging}", self.droneId)
+        self.logger.info(f"Is flying: {self.isFlying}", self.droneId)
+        self.logger.info(f"Is tumbled: {self.isTumbled}", self.droneId)
+        self.logger.info(f"LDR: {self.ldr}", self.droneId)
+
+        self.logger.info(f"Distance down: {self.distanceDown}", self.droneId)
+        
+        if self.master:
+            self.logger.info(f"Distance up: {self.distanceUp}", self.droneId)
+            self.logger.info(f"Distance front: {self.distanceFront}", self.droneId)
+            self.logger.info(f"Distance back: {self.distanceBack}", self.droneId)
+            self.logger.info(f"Distance left: {self.distanceLeft}", self.droneId)
+            self.logger.info(f"Distance right: {self.distanceRight}", self.droneId)
+
+        self.logger.info(f"x: {self.locationX}", self.droneId)
+        self.logger.info(f"y: {self.locationY}", self.droneId)
+        self.logger.info(f"z: {self.locationZ}", self.droneId)
+        self.logger.info(f"direction: {self.direction}", self.droneId)
 
     @abstractmethod
     def kill(self) -> None:
@@ -108,3 +132,67 @@ class Drone(ABC):
     @abstractmethod
     def turnRight(self, rate: float) -> None:
         pass
+
+    @abstractmethod
+    def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
+        pass
+
+    def adjust(self, destinationX: int, destinationY: int, destinationZ: int, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
+        differenceX = destinationX - self.locationX
+        differenceY = destinationY - self.locationY
+        differenceZ = destinationZ - self.locationZ
+
+        if -25 < self.direction < 25:
+            if differenceX > 10:    
+                velocityX = -velocity
+            elif differenceX < -10:
+                velocityX = velocity
+            else:
+                velocityX = 0
+            
+            if -150 < differenceX < 0:
+                velocityX = velocityX / (150 - abs(differenceX))
+                if velocityX < DEFAULT_MIN_VELOCITY:
+                    velocityX = DEFAULT_MIN_VELOCITY
+            elif 0 < differenceX < 150:
+                velocityX = velocityX / (150 - abs(differenceX))
+                if velocityX > -DEFAULT_MIN_VELOCITY:
+                    velocityX = -DEFAULT_MIN_VELOCITY
+
+            if differenceY > 10:
+                velocityY = velocity
+            elif differenceY < -10:
+                velocityY = -velocity
+            else:
+                velocityY = 0
+
+            if -150 < differenceY < 0:
+                velocityY = velocityY / (150 - abs(differenceY))
+                if velocityY > -DEFAULT_MIN_VELOCITY:
+                    velocityY = -DEFAULT_MIN_VELOCITY
+            elif 0 < differenceY < 150:
+                velocityY = velocityY / (150 - abs(differenceY))
+                if velocityY < DEFAULT_MIN_VELOCITY:
+                    velocityY = DEFAULT_MIN_VELOCITY
+        else:
+            velocityX = 0
+            velocityY = 0
+
+        if differenceZ > 10:
+            velocityZ = velocity
+        elif differenceZ < 10:
+            velocityZ = -velocity
+        else:
+            velocityZ = 0
+
+        if -150 < differenceZ < 150:
+            velocityZ = velocityZ / (150 - abs(differenceZ))
+
+        if self.direction > 10:
+            newRate = -rate
+        elif self.direction < -10:
+            newRate = rate
+        else:
+            newRate = 0
+
+        self.move(velocityX, velocityY, velocityZ, newRate)

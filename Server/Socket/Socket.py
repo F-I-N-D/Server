@@ -52,69 +52,6 @@ class Socket(Thread):
                 client, address = self.socket.accept()
                 self.clientConnected = True
 
-                # {
-                #   "command": "getSoftwareDrones"
-                # }
-
-                # {
-                #   "data": [
-                #     {
-                #       "droneId": drone.droneId,
-                #       "master": drone.master,
-                #       "batteryVoltage": drone.batteryVoltage,
-                #       "isCharging": drone.isCharging,
-                #       "isFlying": drone.isFlying,
-                #       "isTumbled": drone.isTumbled,
-                #       "locationX": drone.locationX,
-                #       "locationY": drone.locationY,
-                #       "locationZ": drone.locationZ,
-                #       "direction": drone.direction,
-                #       "distanceDown": drone.distanceDown,
-                #       "distanceUp": drone.distanceUp,
-                #       "distanceFront": drone.distanceFront,
-                #       "distanceBack": drone.distanceBack,
-                #       "distanceLeft": drone.distanceLeft,
-                #       "distanceRight": drone.distanceRight,
-                #       "ldr": drone.ldr,
-                #       "colorFront": drone.colorFront,
-                #       "colorBack": drone.colorBack
-                #     }
-                #   ]
-                # }
-
-                # {
-                #   "command": "getHardwareDrones"
-                # }
-
-                # {
-                #   "command": "connectSoftwareDrone"
-                # }
-
-                # {
-                #   "command": "setSoftwareDrone",
-                #   "data": {
-                #     "droneId": drone.droneId,
-                #     "master": drone.master,
-                #     "batteryVoltage": drone.batteryVoltage,
-                #     "isCharging": drone.isCharging,
-                #     "isFlying": drone.isFlying,
-                #     "isTumbled": drone.isTumbled,
-                #     "locationX": drone.locationX,
-                #     "locationY": drone.locationY,
-                #     "locationZ": drone.locationZ,
-                #     "direction": drone.direction,
-                #     "distanceDown": drone.distanceDown,
-                #     "distanceUp": drone.distanceUp,
-                #     "distanceFront": drone.distanceFront,
-                #     "distanceBack": drone.distanceBack,
-                #     "distanceLeft": drone.distanceLeft,
-                #     "distanceRight": drone.distanceRight,
-                #     "ldr": drone.ldr,
-                #     "colorFront": drone.colorFront,
-                #     "colorBack": drone.colorBack
-                #   }
-                # }
-
             try:
                 response = json.loads(client.recv(1024).decode("utf-8"))
         

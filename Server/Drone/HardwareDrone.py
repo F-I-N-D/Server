@@ -21,7 +21,6 @@ class HardwareDrone(Drone):
         self.log_conf.add_variable('ExternalSensors.LDR', 'float')
 
         if master:
-            self.log_conf.add_variable('range.up', 'uint16_t')
             self.log_conf.add_variable('range.front', 'uint16_t')
             self.log_conf.add_variable('range.back', 'uint16_t')
             self.log_conf.add_variable('range.left', 'uint16_t')
@@ -65,7 +64,6 @@ class HardwareDrone(Drone):
         self.ldr = data['ExternalSensors.LDR']
 
         if self.master:
-            self.distanceUp = data['range.up']
             self.distanceFront = data['range.front']
             self.distanceBack = data['range.back']
             self.distanceLeft = data['range.left']

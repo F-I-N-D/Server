@@ -43,13 +43,13 @@ class Drone(ABC):
         self.targetLocationZ = 0
 
         self.distanceDown = 0
-        self.distanceUp = 0
         self.distanceFront = 0
         self.distanceBack = 0
         self.distanceLeft = 0
         self.distanceRight = 0
 
         self.ldr = 0
+        self.ldrMax = 0
 
         try:
             self.colorFront = switcher[colorFront]
@@ -80,7 +80,6 @@ class Drone(ABC):
         self.logger.info(f"Distance down: {self.distanceDown}", self.droneId)
         
         if self.master:
-            self.logger.info(f"Distance up: {self.distanceUp}", self.droneId)
             self.logger.info(f"Distance front: {self.distanceFront}", self.droneId)
             self.logger.info(f"Distance back: {self.distanceBack}", self.droneId)
             self.logger.info(f"Distance left: {self.distanceLeft}", self.droneId)
@@ -148,7 +147,7 @@ class Drone(ABC):
         differenceY = self.targetLocationY - self.locationY
         differenceZ = self.targetLocationZ - self.locationZ
 
-        self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25 and abs(differenceZ)
+        self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25 and abs(differenceZ) < 7
 
         velocityX = 0
         velocityY = 0
@@ -156,45 +155,48 @@ class Drone(ABC):
         newRate = 0
 
         if -25 < self.direction < 25:
-            if differenceX > 10:    
-                velocityX = -velocity
-            elif differenceX < -10:
-                velocityX = velocity
-            else:
-                velocityX = 0
-            
-            if -150 < differenceX < 0:
-                velocityX = velocityX / (150 - abs(differenceX))
+            if -150 < differenceX < -20:
+                velocityX = velocity / (150 - abs(differenceX))
                 if velocityX < DEFAULT_MIN_VELOCITY:
                     velocityX = DEFAULT_MIN_VELOCITY
-            elif 0 < differenceX < 150:
-                velocityX = velocityX / (150 - abs(differenceX))
+            elif 20 < differenceX < 150:
+                velocityX = -velocity / (150 - abs(differenceX))
                 if velocityX > -DEFAULT_MIN_VELOCITY:
                     velocityX = -DEFAULT_MIN_VELOCITY
+            elif differenceX < -20 or differenceX > 20:
+                if differenceX < 0:
+                    velocityX = velocity
+                elif differenceX > 0:
+                    velocityX = -velocity
 
-            if differenceY > 10:
-                velocityY = velocity
-            elif differenceY < -10:
-                velocityY = -velocity
-            else:
-                velocityY = 0
 
-            if -150 < differenceY < 0:
-                velocityY = velocityY / (150 - abs(differenceY))
+            if -150 < differenceY < -20:
+                velocityY = -velocity / (150 - abs(differenceY))
                 if velocityY > -DEFAULT_MIN_VELOCITY:
                     velocityY = -DEFAULT_MIN_VELOCITY
-            elif 0 < differenceY < 150:
-                velocityY = velocityY / (150 - abs(differenceY))
+            elif 20 < differenceY < 150:
+                velocityY = velocity / (150 - abs(differenceY))
                 if velocityY < DEFAULT_MIN_VELOCITY:
                     velocityY = DEFAULT_MIN_VELOCITY
+            elif differenceY < -20 or differenceY > 20:
+                if differenceY < 0:
+                    velocityY = -velocity
+                elif differenceY > 0:
+                    velocityY = velocity
 
-        if differenceZ > 10:
-            velocityZ = velocity
-        elif differenceZ < 10:
-            velocityZ = -velocity
-
-        if -150 < differenceZ < 150:
-            velocityZ = velocityZ / (150 - abs(differenceZ))
+        if -50 < differenceZ < -5:
+            velocityZ = -velocity / (50 - abs(differenceZ))
+            if velocityZ > -DEFAULT_MIN_VELOCITY:
+                velocityZ = -DEFAULT_MIN_VELOCITY
+        elif 5 < differenceZ < 50:
+            velocityZ = velocity / (50 - abs(differenceZ))
+            if velocityZ > DEFAULT_MIN_VELOCITY:
+                velocityZ = DEFAULT_MIN_VELOCITY
+        elif differenceZ < -5 or differenceZ > 5:
+            if differenceZ < 0:
+                velocityZ = -velocity
+            elif differenceZ > 0:
+                velocityZ = velocity
 
         if self.direction > 10:
             newRate = -rate

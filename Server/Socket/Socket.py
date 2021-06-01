@@ -16,7 +16,6 @@ ADJUSTABLE_VARIABLES = [
     "locationZ",
     "direction",
     "distanceDown",
-    "distanceUp",
     "distanceFront",
     "distanceBack",
     "distanceLeft",
@@ -53,33 +52,53 @@ class Socket(Thread):
                 self.clientConnected = True
 
             try:
-                response = json.loads(client.recv(1024).decode("utf-8"))
+                request = json.loads(client.recv(1024).decode("utf-8"))
         
-                if response["command"] == "getSoftwareDrones":
+                if request["command"] == "getSoftwareDrones":
                     jsonObject = []
                     for drone in self.softwareDrones:
                         jsonObject.append(self.getDroneData(drone))
-                    client.sendall(bytes(json.dumps(jsonObject), "utf-8"))
-                elif response["command"] == "getHardwareDrones":
+                    self.sendResponse(client, jsonObject)
+                elif request["command"] == "getHardwareDrones":
                     jsonObject = []
                     for drone in self.hardwareDrones:
                         jsonObject.append(self.getDroneData(drone))
-                    client.sendall(bytes(json.dumps(jsonObject), "utf-8"))
-                elif response["command"] == "connectSoftwareDrone:":
-                    droneId = response["droneId"]
-                    drone = self.getDrone(droneId)
+                    self.sendResponse(client, jsonObject)
+                elif request["command"] == "connectSoftwareDrone":
+                    droneId = request["droneId"]
+                    drone = self.getSoftwareDrone(droneId)
 
                     if drone:
-                        drone.connected = True
-                        client.sendall(b"valid")
+                        if drone.enableConnect:
+                            drone.connected = True
+                            self.sendResponse(client, { "connected": True })
+                        else:
+                            self.sendError(client, "notConnecting")
                     else:
-                        client.sendall(b"invalid")
-                elif response["command"] == "setSoftwareDrone:":
-                    droneId = response["droneId"]
-                    newData = response["data"]
-                    
-                    drone = self.getDrone(droneId)
+                        self.sendError(client, "invalidDrone")
+                elif request["command"] == "getSoftwareDroneVelocity":
+                    droneId = request["droneId"]
+                    drone = self.getSoftwareDrone(droneId)
 
+                    if drone:
+                        returnValue = {
+                            "droneId": droneId,
+                            "velocityX": drone.velocityX,
+                            "velocityY": drone.velocityY,
+                            "velocityZ": drone.velocityZ,
+                            "rate": drone.rate
+                        }
+
+                        self.sendResponse(client, returnValue)
+                    else:
+                        self.sendError(client, "invalidDrone")
+                elif request["command"] == "setSoftwareDrone":
+                    droneId = request["droneId"]
+                    newData = request["data"]
+                    
+                    drone = self.getSoftwareDrone(droneId)
+
+                    valid = True
                     for newVariableName in newData:
                         if (newVariableName not in ADJUSTABLE_VARIABLES):
                             valid = False
@@ -104,8 +123,6 @@ class Socket(Thread):
                                 drone.direction = newData[newVariableName]
                             elif newVariableName == "distanceDown":
                                 drone.distanceDown = newData[newVariableName]
-                            elif newVariableName == "distanceUp" and drone.master:
-                                drone.distanceUp = newData[newVariableName]
                             elif newVariableName == "distanceFront" and drone.master:
                                 drone.distanceFront = newData[newVariableName]
                             elif newVariableName == "distanceBack" and drone.master:
@@ -116,16 +133,15 @@ class Socket(Thread):
                                 drone.distanceRight = newData[newVariableName]
                             elif newVariableName == "ldr":
                                 drone.ldr = newData[newVariableName]
-
-                        client.sendall(b"valid")
+                        self.sendResponse(client, { "set": True })
                     else:
-                        client.sendall(b"invalid")
+                        self.sendError(client, "invalidDrone")
                 else:
-                    client.sendall(b"invalidCommand")
-            except:
+                    self.sendError(client, "invalidCommand")
+            except Exception:
                 self.clientConnected = False
             
-    def getDrone(self, droneId: str) -> Drone:
+    def getSoftwareDrone(self, droneId: str) -> Drone:
         currentDrone = None
 
         for drone in self.softwareDrones:
@@ -134,8 +150,14 @@ class Socket(Thread):
 
         return currentDrone
 
+    def sendResponse(self, client, dataObject: object) -> None:
+        client.sendall(bytes(json.dumps(dataObject), "utf-8"))
+
+    def sendError(self, client, message: str) -> None:
+        client.sendall(bytes(json.dumps({ "error": message }), "utf-8"))
+
     @staticmethod
-    def getDroneData(drone: Drone) -> object:
+    def getDroneData(drone: HardwareDrone) -> object:
         return {
             "droneId": drone.droneId,
             "master": drone.master,
@@ -148,7 +170,6 @@ class Socket(Thread):
             "locationZ": drone.locationZ,
             "direction": drone.direction,
             "distanceDown": drone.distanceDown,
-            "distanceUp": drone.distanceUp,
             "distanceFront": drone.distanceFront,
             "distanceBack": drone.distanceBack,
             "distanceLeft": drone.distanceLeft,

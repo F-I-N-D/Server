@@ -3,7 +3,7 @@ from Server.Logger.Logger import Logger
 
 DEFAULT_VELOCITY = 0.5
 DEFAULT_MIN_VELOCITY = 0.1
-DEFAULT_RATE = 18
+DEFAULT_RATE = 22
 DEFAULT_HEIGHT = 0.4
 DEFUALT_MASTER = False
 
@@ -96,11 +96,11 @@ class Drone(ABC):
 
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:
-        pass
+        self.logger.debug("Taking off", self.droneId)
 
     @abstractmethod
     def land(self, velocity: float) -> None:
-        pass
+        self.logger.debug("Landing", self.droneId)
 
     @abstractmethod
     def stop(self) -> None:
@@ -147,6 +147,7 @@ class Drone(ABC):
         differenceY = self.targetLocationY - self.locationY
         differenceZ = self.targetLocationZ - self.locationZ
 
+        differenceZ = 0
         self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25 and abs(differenceZ) < 7
 
         velocityX = 0
@@ -155,12 +156,12 @@ class Drone(ABC):
         newRate = 0
 
         if -25 < self.direction < 25:
-            if -150 < differenceX < -20:
-                velocityX = velocity / (150 - abs(differenceX))
+            if -100 < differenceX < -20:
+                velocityX = velocity / (100 - abs(differenceX))
                 if velocityX < DEFAULT_MIN_VELOCITY:
                     velocityX = DEFAULT_MIN_VELOCITY
-            elif 20 < differenceX < 150:
-                velocityX = -velocity / (150 - abs(differenceX))
+            elif 20 < differenceX < 100:
+                velocityX = -velocity / (100 - abs(differenceX))
                 if velocityX > -DEFAULT_MIN_VELOCITY:
                     velocityX = -DEFAULT_MIN_VELOCITY
             elif differenceX < -20 or differenceX > 20:
@@ -170,12 +171,12 @@ class Drone(ABC):
                     velocityX = -velocity
 
 
-            if -150 < differenceY < -20:
-                velocityY = -velocity / (150 - abs(differenceY))
+            if -100 < differenceY < -20:
+                velocityY = -velocity / (100 - abs(differenceY))
                 if velocityY > -DEFAULT_MIN_VELOCITY:
                     velocityY = -DEFAULT_MIN_VELOCITY
-            elif 20 < differenceY < 150:
-                velocityY = velocity / (150 - abs(differenceY))
+            elif 20 < differenceY < 100:
+                velocityY = velocity / (100 - abs(differenceY))
                 if velocityY < DEFAULT_MIN_VELOCITY:
                     velocityY = DEFAULT_MIN_VELOCITY
             elif differenceY < -20 or differenceY > 20:

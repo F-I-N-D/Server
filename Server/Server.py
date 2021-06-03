@@ -17,8 +17,6 @@ idTwo = 'E7E7E7E702'
 idThree = '3'
 idFour = '4'
 idFive = '5'
-# idSix = '6'
-# idSeven = '7'
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -37,22 +35,22 @@ class Server:
         cflib.crtp.init_drivers()
         self.listener.start()
 
-        droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
-        self.swarm.addHardwareDrone(droneMaster)
-        self.gps.addDrone(droneMaster)
-        self.socket.addHardwareDrone(droneMaster)
+        # droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
+        # self.swarm.addHardwareDrone(droneMaster)
+        # self.gps.addDrone(droneMaster)
+        # self.socket.addHardwareDrone(droneMaster)
 
-        droneOne = HardwareDrone(idOne, self.logger, 'green', 'blue')
-        self.swarm.addHardwareDrone(droneOne)
-        self.gps.addDrone(droneOne)
-        self.socket.addHardwareDrone(droneOne)
+        # droneOne = HardwareDrone(idOne, self.logger, 'green', 'blue')
+        # self.swarm.addHardwareDrone(droneOne)
+        # self.gps.addDrone(droneOne)
+        # self.socket.addHardwareDrone(droneOne)
 
-        droneTwo = HardwareDrone(idTwo, self.logger, 'red', 'blue')
-        self.swarm.addHardwareDrone(droneTwo)
-        self.gps.addDrone(droneTwo)
-        self.socket.addHardwareDrone(droneTwo)
+        # droneTwo = HardwareDrone(idTwo, self.logger, 'red', 'blue')
+        # self.swarm.addHardwareDrone(droneTwo)
+        # self.gps.addDrone(droneTwo)
+        # self.socket.addHardwareDrone(droneTwo)
 
-        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow')
+        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow', True)
         self.swarm.addSoftwareDrone(droneThree)
         self.socket.addSoftwareDrone(droneThree)
 
@@ -64,57 +62,62 @@ class Server:
         self.swarm.addSoftwareDrone(droneFive)
         self.socket.addSoftwareDrone(droneFive)
 
-        # droneSix = SoftwareDrone(idSix, self.logger, 'blue', 'yellow')
-        # self.swarm.addSoftwareDrone(droneSix)
-        # self.socket.addSoftwareDrone(droneSix)
+        droneSix = SoftwareDrone('6', self.logger, 'blue', 'yellow')
+        self.swarm.addSoftwareDrone(droneSix)
+        self.socket.addSoftwareDrone(droneSix)
 
-        # droneSeven = SoftwareDrone(idSeven, self.logger, 'blue', 'yellow', True)
+        # droneSeven = SoftwareDrone('7, self.logger, 'blue', 'yellow', True)
         # self.swarm.addSoftwareDrone(droneSeven)
         # self.socket.addSoftwareDrone(droneSeven)
 
-        self.gps.start()
+        # self.gps.start()
         self.socket.start()
         self.swarm.start()
 
-        droneMaster.logData()
-        droneOne.logData()
-        droneTwo.logData()
+        # droneMaster.logData()
+        # droneOne.logData()
+        # droneTwo.logData()
         droneThree.logData()
         droneFour.logData()
-        droneFive.logData()
+        # droneFive.logData()
 
-        # self.swarm.connect()
-        # self.swarm.action = Action.Calibrate
+        self.swarm.connect()
 
-        # while True:
-        #     time.sleep(10)
+        while not self.swarm.isConnected():
+            print("Connecting...")
+            time.sleep(2)
 
-        with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
-            while True:
-                self.gui.key = self.key
-                self.key = None
+        self.swarm.action = Action.Search
 
-                if self.gui.state == State.Connecting:
-                    if self.swarm.isConnected():
-                        self.gui.state = State.Connected
+        while True:
+            time.sleep(10)
 
-                if self.swarm.action == None and self.gui.state == State.Kill:
-                    self.gui.state = State.Connected
+        # with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
+        #     while True:
+        #         self.gui.key = self.key
+        #         self.key = None
 
-                if self.gui.action != None:
-                    self.swarm.action = self.gui.action
-                    self.gui.action = None
+        #         if self.gui.state == State.Connecting:
+        #             if self.swarm.isConnected():
+        #                 self.gui.state = State.Connected
 
-                self.gui.update()
-                live.refresh()
-                time.sleep(0.1)
+        #         if self.swarm.action == None and self.gui.state == State.Kill:
+        #             self.gui.state = State.Connected
 
-        droneMaster.logData()
-        droneOne.logData()
-        droneTwo.logData()
+        #         if self.gui.action != None:
+        #             self.swarm.action = self.gui.action
+        #             self.gui.action = None
+
+        #         self.gui.update()
+        #         live.refresh()
+        #         time.sleep(0.1)
+
+        # droneMaster.logData()
+        # droneOne.logData()
+        # droneTwo.logData()
         droneThree.logData()
         droneFour.logData()
-        droneFive.logData()
+        # droneFive.logData()
 
         self.logger.info("End")
 

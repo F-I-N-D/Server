@@ -53,7 +53,6 @@ class Socket(Thread):
 
             try:
                 request = json.loads(client.recv(1024).decode("utf-8"))
-        
                 if request["command"] == "getSoftwareDrones":
                     jsonObject = []
                     for drone in self.softwareDrones:
@@ -138,7 +137,7 @@ class Socket(Thread):
                         self.sendError(client, "invalidDrone")
                 else:
                     self.sendError(client, "invalidCommand")
-            except Exception:
+            except Exception as e:
                 self.clientConnected = False
             
     def getSoftwareDrone(self, droneId: str) -> Drone:
@@ -175,6 +174,7 @@ class Socket(Thread):
             "distanceLeft": drone.distanceLeft,
             "distanceRight": drone.distanceRight,
             "ldr": drone.ldr,
+            "ldrMax": drone.ldrMax,
             "colorFront": drone.colorFront,
             "colorBack": drone.colorBack
         }

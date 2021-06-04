@@ -17,8 +17,6 @@ idTwo = 'E7E7E7E702'
 idThree = '3'
 idFour = '4'
 idFive = '5'
-# idSix = '6'
-# idSeven = '7'
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -37,22 +35,22 @@ class Server:
         cflib.crtp.init_drivers()
         self.listener.start()
 
-        droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
-        self.swarm.addHardwareDrone(droneMaster)
-        self.gps.addDrone(droneMaster)
-        self.socket.addHardwareDrone(droneMaster)
+        # droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
+        # self.swarm.addHardwareDrone(droneMaster)
+        # self.gps.addDrone(droneMaster)
+        # self.socket.addHardwareDrone(droneMaster)
 
-        droneOne = HardwareDrone(idOne, self.logger, 'green', 'blue')
-        self.swarm.addHardwareDrone(droneOne)
-        self.gps.addDrone(droneOne)
-        self.socket.addHardwareDrone(droneOne)
+        # droneOne = HardwareDrone(idOne, self.logger, 'green', 'blue')
+        # self.swarm.addHardwareDrone(droneOne)
+        # self.gps.addDrone(droneOne)
+        # self.socket.addHardwareDrone(droneOne)
 
-        droneTwo = HardwareDrone(idTwo, self.logger, 'red', 'blue')
-        self.swarm.addHardwareDrone(droneTwo)
-        self.gps.addDrone(droneTwo)
-        self.socket.addHardwareDrone(droneTwo)
+        # droneTwo = HardwareDrone(idTwo, self.logger, 'red', 'blue')
+        # self.swarm.addHardwareDrone(droneTwo)
+        # self.gps.addDrone(droneTwo)
+        # self.socket.addHardwareDrone(droneTwo)
 
-        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow')
+        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow', True)
         self.swarm.addSoftwareDrone(droneThree)
         self.socket.addSoftwareDrone(droneThree)
 
@@ -64,27 +62,32 @@ class Server:
         self.swarm.addSoftwareDrone(droneFive)
         self.socket.addSoftwareDrone(droneFive)
 
-        # droneSix = SoftwareDrone(idSix, self.logger, 'blue', 'yellow')
-        # self.swarm.addSoftwareDrone(droneSix)
-        # self.socket.addSoftwareDrone(droneSix)
+        droneSix = SoftwareDrone('6', self.logger, 'blue', 'yellow')
+        self.swarm.addSoftwareDrone(droneSix)
+        self.socket.addSoftwareDrone(droneSix)
 
-        # droneSeven = SoftwareDrone(idSeven, self.logger, 'blue', 'yellow', True)
-        # self.swarm.addSoftwareDrone(droneSeven)
-        # self.socket.addSoftwareDrone(droneSeven)
+        droneSeven = SoftwareDrone('7', self.logger, 'blue', 'yellow')
+        self.swarm.addSoftwareDrone(droneSeven)
+        self.socket.addSoftwareDrone(droneSeven)
 
-        self.gps.start()
+        # self.gps.start()
         self.socket.start()
         self.swarm.start()
 
-        droneMaster.logData()
-        droneOne.logData()
-        droneTwo.logData()
+        # droneMaster.logData()
+        # droneOne.logData()
+        # droneTwo.logData()
         droneThree.logData()
         droneFour.logData()
-        droneFive.logData()
+        # droneFive.logData()
 
         # self.swarm.connect()
-        # self.swarm.action = Action.Calibrate
+
+        # while not self.swarm.isConnected():
+        #     print("Connecting...")
+        #     time.sleep(2)
+
+        # self.swarm.action = Action.Search
 
         # while True:
         #     time.sleep(10)
@@ -109,12 +112,12 @@ class Server:
                 live.refresh()
                 time.sleep(0.1)
 
-        droneMaster.logData()
-        droneOne.logData()
-        droneTwo.logData()
+        # droneMaster.logData()
+        # droneOne.logData()
+        # droneTwo.logData()
         droneThree.logData()
         droneFour.logData()
-        droneFive.logData()
+        # droneFive.logData()
 
         self.logger.info("End")
 

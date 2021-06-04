@@ -85,7 +85,7 @@ class HardwareDrone(Drone):
             self.disconnect()
             return
 
-        self.motionCommander.take_off(height, velocity)
+        self.motionCommander.take_off(height / 10, velocity)
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)

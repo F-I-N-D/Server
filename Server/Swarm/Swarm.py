@@ -9,6 +9,7 @@ from threading import Thread
 import numpy as np
 
 DRONE_HEIGHT = 50
+MASTER_LOWER_HEIGHT = 15
 DRONE_DISTANCE = 100
 BORDER_WIDTH_X = 300
 BORDER_WIDTH_Y = 200
@@ -215,7 +216,7 @@ class Swarm(Thread):
 
     def fly(self) -> None:
         for drone in self.drones:
-            drone.takeOff(0.8)
+            drone.takeOff(DRONE_HEIGHT - MASTER_LOWER_HEIGHT if drone.master else DRONE_HEIGHT)
 
         time.sleep(1)
 
@@ -228,7 +229,7 @@ class Swarm(Thread):
             location = self.getStartingLocations()
             targetReached = False
             for index, drone in enumerate(self.drones):
-                drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
+                drone.setTarget(location[index][0], location[index][1])
 
         if self.goal == Goal.Search:
             f = open("ldrCalibrate.csv", "r")
@@ -247,7 +248,7 @@ class Swarm(Thread):
                     self.goal = None
                     continue
                 for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
+                    drone.setTarget(location[index][0], location[index][1])
                 targetReached = False
                 itteration += 1
             elif self.goal == Goal.Calibrate and targetReached:
@@ -260,7 +261,7 @@ class Swarm(Thread):
                     self.goal = None
                     continue
                 for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
+                    drone.setTarget(location[index][0], location[index][1])
                 targetReached = False
                 itteration += 1
             elif self.goal == Goal.Scatter and targetReached:
@@ -327,7 +328,7 @@ class Swarm(Thread):
     def disconnect(self):
         for drone in self.drones:
             drone.disconnect()
-
+            
     def kill(self):
         for drone in self.drones:
             drone.kill("Manual")

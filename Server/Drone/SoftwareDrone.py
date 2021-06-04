@@ -34,6 +34,7 @@ class SoftwareDrone(Drone):
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
         super().takeOff(height, velocity)
         self.isFlying = True
+        self.locationZ = height
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)

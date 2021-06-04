@@ -1,3 +1,6 @@
 __pycache__
 .vscode
 logs
+TODO
+ldrCalibrate.csv
+ldrCalibrate_backup.csv

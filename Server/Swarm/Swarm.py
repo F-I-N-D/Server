@@ -1,12 +1,15 @@
-from Server.Drone.Drone import Drone
-from Server.Drone.HardwareDrone import HardwareDrone
-from Server.Drone.SoftwareDrone import SoftwareDrone
 import operator
 import time
 import enum
 import math
 from threading import Thread
 import numpy as np
+
+from Server.Drone.Drone import Drone
+from Server.Drone.HardwareDrone import HardwareDrone
+from Server.Drone.SoftwareDrone import SoftwareDrone
+from Server.Swarm.Action import Action
+from Server.Swarm.Goal import Goal
 
 DRONE_HEIGHT = 50
 MASTER_LOWER_HEIGHT = 15
@@ -17,20 +20,6 @@ SCREEN_SIZE_X = 1920
 SCREEN_SIZE_Y = 1080
 MIN_OBSTACLE_DISTANCE = 30
 DEFAULT_CIRCLE_RADIUS = 100
-
-class Goal(enum.Enum):
-    Search = 0
-    Scatter = 1
-    Calibrate = 2
-    FollowTarget = 3
-
-class Action(enum.Enum):
-    Connect = 10
-    Search = 20
-    Calibrate = 21
-    Scatter = 22
-    Disconnect = 23
-    Kill = 30
 
 class Swarm(Thread):
     def __init__(self):
@@ -281,6 +270,10 @@ class Swarm(Thread):
             for drone in self.drones:
                 drone.adjust()
 
+                if not drone.isConnected():
+                    self.drones.remove(drone)
+                    continue
+
                 if not drone.targetReached:
                     targetReached = False
 
@@ -314,8 +307,7 @@ class Swarm(Thread):
 
             time.sleep(0.05)
 
-        time.sleep(1)
-        self.land()            
+        self.land()
 
     @staticmethod
     def calculateDistanceBetweenDrones(droneOne: Drone, droneTwo: Drone) -> int:

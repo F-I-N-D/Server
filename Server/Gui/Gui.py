@@ -14,7 +14,8 @@ from rich.panel import Panel
 from rich.tree import Tree
 from rich.spinner import Spinner
 from rich.align import Align
-from Server.Swarm.Swarm import Action
+
+from Server.Swarm.Action import Action
 
 console = Console()
 

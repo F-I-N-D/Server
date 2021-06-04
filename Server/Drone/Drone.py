@@ -147,8 +147,7 @@ class Drone(ABC):
         differenceY = self.targetLocationY - self.locationY
         differenceZ = self.targetLocationZ - self.locationZ
 
-        differenceZ = 0
-        self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25 and abs(differenceZ) < 7
+        self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25
 
         velocityX = 0
         velocityY = 0

@@ -23,8 +23,8 @@ class SoftwareDrone(Drone):
     def disconnect(self) -> None:
         super().disconnect()
 
-    def kill(self) -> None:
-        super().kill()
+    def kill(self, message: str) -> None:
+        super().kill(message)
         self.velocityX = 0
         self.velocityY = 0
         self.velocityZ = 0

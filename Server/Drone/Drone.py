@@ -91,8 +91,8 @@ class Drone(ABC):
         self.logger.info(f"direction: {self.direction}", self.droneId)
 
     @abstractmethod
-    def kill(self) -> None:
-        self.logger.critical("Killed", self.droneId)
+    def kill(self, message: str) -> None:
+        self.logger.critical(f"Killed: {message}", self.droneId)
 
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:

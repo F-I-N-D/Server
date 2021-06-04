@@ -66,9 +66,9 @@ class Server:
         self.swarm.addSoftwareDrone(droneSix)
         self.socket.addSoftwareDrone(droneSix)
 
-        # droneSeven = SoftwareDrone('7, self.logger, 'blue', 'yellow', True)
-        # self.swarm.addSoftwareDrone(droneSeven)
-        # self.socket.addSoftwareDrone(droneSeven)
+        droneSeven = SoftwareDrone('7', self.logger, 'blue', 'yellow')
+        self.swarm.addSoftwareDrone(droneSeven)
+        self.socket.addSoftwareDrone(droneSeven)
 
         # self.gps.start()
         self.socket.start()
@@ -81,36 +81,36 @@ class Server:
         droneFour.logData()
         # droneFive.logData()
 
-        self.swarm.connect()
+        # self.swarm.connect()
 
-        while not self.swarm.isConnected():
-            print("Connecting...")
-            time.sleep(2)
+        # while not self.swarm.isConnected():
+        #     print("Connecting...")
+        #     time.sleep(2)
 
-        self.swarm.action = Action.Search
+        # self.swarm.action = Action.Search
 
-        while True:
-            time.sleep(10)
+        # while True:
+        #     time.sleep(10)
 
-        # with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
-        #     while True:
-        #         self.gui.key = self.key
-        #         self.key = None
+        with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
+            while True:
+                self.gui.key = self.key
+                self.key = None
 
-        #         if self.gui.state == State.Connecting:
-        #             if self.swarm.isConnected():
-        #                 self.gui.state = State.Connected
+                if self.gui.state == State.Connecting:
+                    if self.swarm.isConnected():
+                        self.gui.state = State.Connected
 
-        #         if self.swarm.action == None and self.gui.state == State.Kill:
-        #             self.gui.state = State.Connected
+                if self.swarm.action == None and self.gui.state == State.Kill:
+                    self.gui.state = State.Connected
 
-        #         if self.gui.action != None:
-        #             self.swarm.action = self.gui.action
-        #             self.gui.action = None
+                if self.gui.action != None:
+                    self.swarm.action = self.gui.action
+                    self.gui.action = None
 
-        #         self.gui.update()
-        #         live.refresh()
-        #         time.sleep(0.1)
+                self.gui.update()
+                live.refresh()
+                time.sleep(0.1)
 
         # droneMaster.logData()
         # droneOne.logData()

@@ -42,8 +42,8 @@ class HardwareDrone(Drone):
         super().disconnect()
         self.crazyflie.close_link()
 
-    def kill(self) -> None:
-        super().kill()
+    def kill(self, message: str) -> None:
+        super().kill(message)
         self.powerSwitch.stm_power_down()
 
     def addLogger(self) -> None:
@@ -69,12 +69,13 @@ class HardwareDrone(Drone):
             self.distanceLeft = data['range.left']
             self.distanceRight = data['range.right']
         
-        if self.isTumbled or self.isCharging:
-            self.kill()
+        if self.isTumbled:
+            self.kill("Tumbled")
+        elif self.isCharging:
+            self.kill("Charging")
 
         if self.batteryVoltage < 2.8 and self.batteryVoltage > 0.0:
-            self.logger.warning("Battery low", self.droneId)
-            self.land()
+            self.kill("Battery low", self.droneId)
             self.disconnect()
 
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:

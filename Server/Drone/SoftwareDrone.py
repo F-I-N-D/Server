@@ -9,7 +9,6 @@ class SoftwareDrone(Drone):
 
         self.velocityX = 0
         self.velocityY = 0
-        self.velocityZ = 0
         self.rate = 0
 
     def connect(self) -> None:

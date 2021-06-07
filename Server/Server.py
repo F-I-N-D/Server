@@ -70,6 +70,10 @@ class Server:
         self.swarm.addSoftwareDrone(droneSeven)
         self.socket.addSoftwareDrone(droneSeven)
 
+        droneEight = SoftwareDrone('8', self.logger, 'blue', 'yellow')
+        self.swarm.addSoftwareDrone(droneEight)
+        self.socket.addSoftwareDrone(droneEight)
+
         self.gps.start()
         self.socket.start()
         self.swarm.start()
@@ -80,7 +84,7 @@ class Server:
         #     print("Connecting...")
         #     time.sleep(2)
 
-        # self.swarm.action = Action.Search
+        # self.swarm.action = Action.Calibrate
 
         # while True:
         #     time.sleep(10)

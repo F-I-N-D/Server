@@ -1,3 +1,5 @@
+import enum
+
 class Action(enum.Enum):
     Connect = 10
     Search = 20

@@ -272,7 +272,7 @@ class Swarm(Thread):
                     self.goal = None
                     continue
                 for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
+                    drone.setTarget(location[index][0], location[index][1])
                 targetReached = False
                 itteration += 1
 

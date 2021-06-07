@@ -50,6 +50,8 @@ class Drone(ABC):
         self.ldr = 0
         self.ldrMax = 0
 
+        self.framesNotSeen = 0
+
         try:
             self.colorFront = switcher[colorFront]
             self.colorBack = switcher[colorBack]

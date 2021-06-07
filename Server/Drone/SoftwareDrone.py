@@ -30,6 +30,7 @@ class SoftwareDrone(Drone):
         self.velocityZ = 0
         self.rate = 0
         self.isFlying = False
+        self.connected = False
 
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
         super().takeOff(height, velocity)

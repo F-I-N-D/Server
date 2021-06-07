@@ -20,6 +20,7 @@ SCREEN_SIZE_X = 1920
 SCREEN_SIZE_Y = 1080
 MIN_OBSTACLE_DISTANCE = 30
 DEFAULT_CIRCLE_RADIUS = 100
+MAX_AMOUNT_OF_FRAMES_NOT_SEEN = 10
 
 class Swarm(Thread):
     def __init__(self):
@@ -269,6 +270,9 @@ class Swarm(Thread):
             
             for drone in self.drones:
                 drone.adjust()
+
+                if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
+                    drone.kill("Drone is no longer seen by the GPS")
 
                 if not drone.isConnected():
                     self.drones.remove(drone)

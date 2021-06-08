@@ -1,13 +1,15 @@
 from datetime import datetime
 import os
 from Server.Logger.Level import Level
+from pathlib import Path
 
 class Logger:
     def __init__(self, level: Level = Level.Info):
         self.level = level
         if not os.path.exists("logs"):
             os.makedirs("logs")
-        self.logFile = f"logs/{datetime.now().strftime('%d-%m-%Y_%H:%M:%S')}.log"
+            data_folder = Path("source_data/text_files/")
+        self.logFile = Path(f"logs/{datetime.now().strftime('%d-%m-%Y_%H:%M:%S')}.log")
 
     def debug(self, message: str, droneId: str = None):
         if self.level >= Level.Debug:

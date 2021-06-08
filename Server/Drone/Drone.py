@@ -56,8 +56,7 @@ class Drone(ABC):
             self.colorFront = switcher[colorFront]
             self.colorBack = switcher[colorBack]
         except:
-            print(f'Color needs to be on of the following color: {switcher.keys()}')
-            raise ValueError
+            raise ValueError(f'Color needs to be on of the following color: {switcher.keys()}')
 
     @abstractmethod
     def connect(self) -> None:
@@ -72,24 +71,24 @@ class Drone(ABC):
         self.logger.info("Disconnect", self.droneId)
 
     def logData(self) -> None:
-        self.logger.info(f"Battery: {self.batteryVoltage}V", self.droneId)
-        self.logger.info(f"Is charging: {self.isCharging}", self.droneId)
-        self.logger.info(f"Is flying: {self.isFlying}", self.droneId)
-        self.logger.info(f"Is tumbled: {self.isTumbled}", self.droneId)
-        self.logger.info(f"LDR: {self.ldr}", self.droneId)
+        self.logger.debug(f"Battery: {self.batteryVoltage}V", self.droneId)
+        self.logger.debug(f"Is charging: {self.isCharging}", self.droneId)
+        self.logger.debug(f"Is flying: {self.isFlying}", self.droneId)
+        self.logger.debug(f"Is tumbled: {self.isTumbled}", self.droneId)
+        self.logger.debug(f"LDR: {self.ldr}", self.droneId)
 
-        self.logger.info(f"Distance down: {self.distanceDown}", self.droneId)
+        self.logger.debug(f"Distance down: {self.distanceDown}", self.droneId)
         
         if self.master:
-            self.logger.info(f"Distance front: {self.distanceFront}", self.droneId)
-            self.logger.info(f"Distance back: {self.distanceBack}", self.droneId)
-            self.logger.info(f"Distance left: {self.distanceLeft}", self.droneId)
-            self.logger.info(f"Distance right: {self.distanceRight}", self.droneId)
+            self.logger.debug(f"Distance front: {self.distanceFront}", self.droneId)
+            self.logger.debug(f"Distance back: {self.distanceBack}", self.droneId)
+            self.logger.debug(f"Distance left: {self.distanceLeft}", self.droneId)
+            self.logger.debug(f"Distance right: {self.distanceRight}", self.droneId)
 
-        self.logger.info(f"x: {self.locationX}", self.droneId)
-        self.logger.info(f"y: {self.locationY}", self.droneId)
-        self.logger.info(f"z: {self.locationZ}", self.droneId)
-        self.logger.info(f"direction: {self.direction}", self.droneId)
+        self.logger.debug(f"x: {self.locationX}", self.droneId)
+        self.logger.debug(f"y: {self.locationY}", self.droneId)
+        self.logger.debug(f"z: {self.locationZ}", self.droneId)
+        self.logger.debug(f"direction: {self.direction}", self.droneId)
 
     @abstractmethod
     def kill(self, message: str) -> None:
@@ -99,11 +98,11 @@ class Drone(ABC):
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:
         self.logData()
-        self.logger.debug("Taking off", self.droneId)
+        self.logger.info("Taking off", self.droneId)
 
     @abstractmethod
     def land(self, velocity: float) -> None:
-        self.logger.debug("Landing", self.droneId)
+        self.logger.info("Landing", self.droneId)
         self.logData()
 
     @abstractmethod

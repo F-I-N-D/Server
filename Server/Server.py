@@ -70,16 +70,9 @@ class Server:
         self.swarm.addSoftwareDrone(droneSeven)
         self.socket.addSoftwareDrone(droneSeven)
 
-        # self.gps.start()
+        self.gps.start()
         self.socket.start()
         self.swarm.start()
-
-        # droneMaster.logData()
-        # droneOne.logData()
-        # droneTwo.logData()
-        droneThree.logData()
-        droneFour.logData()
-        # droneFive.logData()
 
         # self.swarm.connect()
 
@@ -111,13 +104,6 @@ class Server:
                 self.gui.update()
                 live.refresh()
                 time.sleep(0.1)
-
-        # droneMaster.logData()
-        # droneOne.logData()
-        # droneTwo.logData()
-        droneThree.logData()
-        droneFour.logData()
-        # droneFive.logData()
 
         self.logger.info("End")
 

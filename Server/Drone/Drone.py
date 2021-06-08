@@ -40,7 +40,6 @@ class Drone(ABC):
 
         self.targetLocationX = 0
         self.targetLocationY = 0
-        self.targetLocationZ = 0
 
         self.distanceDown = 0
         self.distanceFront = 0
@@ -93,14 +92,17 @@ class Drone(ABC):
     @abstractmethod
     def kill(self, message: str) -> None:
         self.logger.critical(f"Killed: {message}", self.droneId)
+        self.logData()
 
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> None:
+        self.logData()
         self.logger.debug("Taking off", self.droneId)
 
     @abstractmethod
     def land(self, velocity: float) -> None:
         self.logger.debug("Landing", self.droneId)
+        self.logData()
 
     @abstractmethod
     def stop(self) -> None:
@@ -145,13 +147,11 @@ class Drone(ABC):
     def adjust(self, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
         differenceX = self.targetLocationX - self.locationX
         differenceY = self.targetLocationY - self.locationY
-        differenceZ = self.targetLocationZ - self.locationZ
 
         self.targetReached = abs(differenceX) < 25 and abs(differenceY) < 25
 
         velocityX = 0
         velocityY = 0
-        velocityZ = 0
         newRate = 0
 
         if -25 < self.direction < 25:
@@ -184,20 +184,6 @@ class Drone(ABC):
                 elif differenceY > 0:
                     velocityY = velocity
 
-        if -50 < differenceZ < -5:
-            velocityZ = -velocity / (50 - abs(differenceZ))
-            if velocityZ > -DEFAULT_MIN_VELOCITY:
-                velocityZ = -DEFAULT_MIN_VELOCITY
-        elif 5 < differenceZ < 50:
-            velocityZ = velocity / (50 - abs(differenceZ))
-            if velocityZ > DEFAULT_MIN_VELOCITY:
-                velocityZ = DEFAULT_MIN_VELOCITY
-        elif differenceZ < -5 or differenceZ > 5:
-            if differenceZ < 0:
-                velocityZ = -velocity
-            elif differenceZ > 0:
-                velocityZ = velocity
-
         if self.direction > 10:
             newRate = -rate
         elif self.direction < -10:
@@ -205,7 +191,6 @@ class Drone(ABC):
 
         self.move(velocityX, velocityY, 0, newRate)
 
-    def setTarget(self, targetLocationX, targetLocationY, targetLocationZ):
+    def setTarget(self, targetLocationX, targetLocationY):
         self.targetLocationX = targetLocationX
         self.targetLocationY = targetLocationY
-        self.targetLocationZ = targetLocationZ

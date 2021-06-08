@@ -31,10 +31,43 @@ class SoftwareDrone(Drone):
         self.isFlying = False
         self.connected = False
 
-    def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().takeOff(height, velocity)
+    def dataCallback(self, data) -> None:
+        for variableName in data:
+            if variableName == "batteryVoltage":
+                self.batteryVoltage = data[variableName]
+            elif variableName == "isCharging":
+                self.isCharging = data[variableName]
+            elif variableName == "isFlying":
+                self.isFlying = data[variableName]
+            elif variableName == "isTumbled":
+                self.isTumbled = data[variableName]
+            elif variableName == "locationX":
+                self.locationX = data[variableName]
+            elif variableName == "locationY":
+                self.locationY = data[variableName]
+            elif variableName == "direction":
+                self.direction = data[variableName]
+            elif variableName == "distanceDown":
+                self.distanceDown = data[variableName]
+            elif variableName == "distanceFront" and self.master:
+                self.distanceFront = data[variableName]
+            elif variableName == "distanceBack" and self.master:
+                self.distanceBack = data[variableName]
+            elif variableName == "distanceLeft" and self.master:
+                self.distanceLeft = data[variableName]
+            elif variableName == "distanceRight" and self.master:
+                self.distanceRight = data[variableName]
+            elif variableName == "ldr":
+                self.ldr = data[variableName]
+
+        super().dataCallback(data)
+
+    def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
+        if not super().takeOff(height, velocity):
+            return False
         self.isFlying = True
         self.locationZ = height
+        return True
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)
@@ -50,30 +83,6 @@ class SoftwareDrone(Drone):
         velocityY = 0
         velocityZ = 0
         newRate = 0
-
-    def up(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().up(velocity)
-
-    def down(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().down(velocity)
-
-    def forward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().forward(velocity)
-
-    def backward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().backward(velocity)
-
-    def left(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().left(velocity)
-
-    def right(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().right(velocity)
-
-    def turnLeft(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnLeft(rate)
-
-    def turnRight(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnRight(rate)
 
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)

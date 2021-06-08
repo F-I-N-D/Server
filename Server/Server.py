@@ -74,7 +74,7 @@ class Server:
         self.swarm.addSoftwareDrone(droneEight)
         self.socket.addSoftwareDrone(droneEight)
 
-        self.gps.start()
+        # self.gps.start()
         self.socket.start()
         self.swarm.start()
 

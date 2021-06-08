@@ -48,10 +48,10 @@ class HardwareDrone(Drone):
 
     def addLogger(self) -> None:
         self.crazyflie.log.add_config(self.log_conf)
-        self.log_conf.data_received_cb.add_callback(self.__dataCallback)
+        self.log_conf.data_received_cb.add_callback(self.dataCallback)
         self.log_conf.start()
 
-    def __dataCallback(self, timestamp, data, logconf) -> None:
+    def dataCallback(self, timestamp, data, logconf) -> None:
         self.batteryVoltage = data['pm.vbat']
         self.isCharging = True if data['pm.state'] == 1 else False
 
@@ -68,24 +68,14 @@ class HardwareDrone(Drone):
             self.distanceBack = data['range.back']
             self.distanceLeft = data['range.left']
             self.distanceRight = data['range.right']
-        
-        if self.isTumbled:
-            self.kill("Tumbled")
-        elif self.isCharging:
-            self.kill("Charging")
 
-        if self.batteryVoltage < 2.8 and self.batteryVoltage > 0.0:
-            self.kill("Battery low", self.droneId)
-            self.disconnect()
+        super().dataCallback(data)
 
-    def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().takeOff(height, velocity)
-        if self.batteryVoltage < 3.5 and self.batteryVoltage > 0.0:
-            self.logger.warning("Battery low", self.droneId)
-            self.disconnect()
-            return
-
-        self.motionCommander.take_off(height / 10, velocity)
+    def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
+        if not super().takeOff(height, velocity):
+            self.motionCommander.take_off(height / 10, velocity)
+            return False
+        return True
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)
@@ -94,38 +84,6 @@ class HardwareDrone(Drone):
     def stop(self) -> None:
         super().stop()
         self.motionCommander.stop()
-
-    def up(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().up(velocity)
-        self.motionCommander.start_up(velocity)
-
-    def down(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().down(velocity)
-        self.motionCommander.start_down(velocity)
-
-    def forward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().forward(velocity)
-        self.motionCommander.start_forward(velocity)
-
-    def backward(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().backward(velocity)
-        self.motionCommander.start_back(velocity)
-
-    def left(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().left(velocity)
-        self.motionCommander.start_left(velocity)
-
-    def right(self, velocity: float = DEFAULT_VELOCITY) -> None:
-        super().right(velocity)
-        self.motionCommander.start_right(velocity)
-
-    def turnLeft(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnLeft(rate)
-        self.motionCommander.start_turn_left(rate)
-
-    def turnRight(self, rate: float = DEFAULT_RATE) -> None:
-        super().turnRight(rate)
-        self.motionCommander.start_turn_right(rate)
 
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)

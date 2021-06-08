@@ -102,35 +102,7 @@ class Socket(Thread):
                             valid = False
 
                     if valid and drone:
-                        for newVariableName in newData:
-                            if newVariableName == "batteryVoltage":
-                                drone.batteryVoltage = newData[newVariableName]
-                            elif newVariableName == "isCharging":
-                                drone.isCharging = newData[newVariableName]
-                            elif newVariableName == "isFlying":
-                                drone.isFlying = newData[newVariableName]
-                            elif newVariableName == "isTumbled":
-                                drone.isTumbled = newData[newVariableName]
-                            elif newVariableName == "locationX":
-                                drone.locationX = newData[newVariableName]
-                            elif newVariableName == "locationY":
-                                drone.locationY = newData[newVariableName]
-                            elif newVariableName == "locationZ":
-                                drone.locationZ = newData[newVariableName]
-                            elif newVariableName == "direction":
-                                drone.direction = newData[newVariableName]
-                            elif newVariableName == "distanceDown":
-                                drone.distanceDown = newData[newVariableName]
-                            elif newVariableName == "distanceFront" and drone.master:
-                                drone.distanceFront = newData[newVariableName]
-                            elif newVariableName == "distanceBack" and drone.master:
-                                drone.distanceBack = newData[newVariableName]
-                            elif newVariableName == "distanceLeft" and drone.master:
-                                drone.distanceLeft = newData[newVariableName]
-                            elif newVariableName == "distanceRight" and drone.master:
-                                drone.distanceRight = newData[newVariableName]
-                            elif newVariableName == "ldr":
-                                drone.ldr = newData[newVariableName]
+                        drone.dataCallback(newData)
                         self.sendResponse(client, { "set": True })
                     elif not drone:
                         self.sendError(client, "invalidDrone")

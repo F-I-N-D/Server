@@ -56,8 +56,7 @@ class Drone(ABC):
             self.colorFront = switcher[colorFront]
             self.colorBack = switcher[colorBack]
         except:
-            print(f'Color needs to be on of the following color: {switcher.keys()}')
-            raise ValueError
+            raise ValueError(f'Color needs to be on of the following color: {switcher.keys()}')
 
     @abstractmethod
     def connect(self) -> None:

@@ -344,10 +344,11 @@ class Swarm(Thread):
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, BORDER_WIDTH_Y])
             coordinates += startCoordinates
         elif itteration >= 3:
-            if itteration > 2 + numberOfDrones:
+            if itteration > numberOfDrones + 3:
                 return []
 
-            coordinates += startCoordinates[::-1][0:itteration-2][::-1]
+            nextDronePlace = max(numberOfDrones - itteration, 0)
+            coordinates += startCoordinates[nextDronePlace:nextDronePlace + itteration - 3]
             coordinates.append([BORDER_WIDTH_X, SCREEN_SIZE_Y - BORDER_WIDTH_Y])
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, SCREEN_SIZE_Y - BORDER_WIDTH_Y])
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, BORDER_WIDTH_Y])

@@ -1,7 +1,7 @@
 import operator
 import time
-import enum
 import math
+import random
 from threading import Thread
 import numpy as np
 
@@ -232,38 +232,27 @@ class Swarm(Thread):
                         
         while self.goal != None:
             self.safetyCheck()
+
             if self.goal == Goal.Search and targetReached:
                 location = self.getSearchLocations(itteration)
-                if location == []:
-                    self.goal = None
-                    continue
-                for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1])
-                targetReached = False
-                itteration += 1
             elif self.goal == Goal.Calibrate and targetReached:
                 location = self.getCalibrateLocations(itteration)
+            elif self.goal == Goal.Scatter and targetReached:
+                location = self.getScatterLocations(itteration)
+            elif self.goal == Goal.FollowTarget and targetReached:
+                location = self.getCircleLocations(targetLocation[0], targetLocation[1])
+
+            if targetReached:       
                 if location == []:
-                    f = open("ldrCalibrate.csv", "w")
-                    for drone in self.drones:
-                        f.write(f"{drone.droneId},{drone.ldrMax}\n")
-                    f.close
+                    if self.goal == Goal.Calibrate:
+                        f = open("ldrCalibrate.csv", "w")
+                        for drone in self.drones:
+                            f.write(f"{drone.droneId},{drone.ldrMax}\n")
+                        f.close
                     self.goal = None
                     continue
                 for index, drone in enumerate(self.drones):
                     drone.setTarget(location[index][0], location[index][1])
-                targetReached = False
-                itteration += 1
-            elif self.goal == Goal.Scatter and targetReached:
-                pass
-            elif self.goal == Goal.FollowTarget and targetReached:
-                location = self.getCircleLocations(targetLocation[0], targetLocation[1])
-                if location == []:
-                    self.goal = None
-                    continue
-                for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
-                targetReached = False
                 itteration += 1
 
             targetReached = True
@@ -337,7 +326,7 @@ class Swarm(Thread):
             startCoordinates.append([locationX, locationY])
         return startCoordinates
 
-    def getCalibrateLocations(self, itteration) -> []:
+    def getCalibrateLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
         coordinates = []
@@ -366,14 +355,13 @@ class Swarm(Thread):
 
         return coordinates
 
-    def getSearchLocations(self, itteration) -> []:
+    def getSearchLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
         coordinates = []
         step = itteration % 2
 
         if self.drones[-1].locationY >= SCREEN_SIZE_Y - BORDER_WIDTH_Y - 50 and step == 1:
-            print("hi")
             return []
 
         if step == 1:
@@ -413,7 +401,7 @@ class Swarm(Thread):
                     coordinates.append([locationX, locationY])
         return coordinates
 
-    def getCircleLocations(self, locationX, locationY) -> []:
+    def getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
         vector = np.array([DEFAULT_CIRCLE_RADIUS, 0])
         centerPoint = np.array([locationX, locationY])
@@ -429,6 +417,18 @@ class Swarm(Thread):
             resultArray.append(result.tolist())
 
         return resultArray
+
+    def getScatterLocations(self, itteration: int) -> []:
+        if itteration > 0:
+            return []
+
+        scatterLocations = []
+
+        for drone in self.drones:
+            locationX = random.randint(BORDER_WIDTH_X, SCREEN_SIZE_X - BORDER_WIDTH_X)
+            locationY = random.randint(BORDER_WIDTH_Y, SCREEN_SIZE_Y - BORDER_WIDTH_Y)
+            scatterLocations.append([locationX, locationY])
+        return scatterLocations
 
     def safetyCheck(self):
         numberOfDrones = len(self.drones)

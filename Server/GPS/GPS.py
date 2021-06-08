@@ -117,7 +117,7 @@ class GPS(Thread):
                             
                             droneSeen = True
 
-                    if droneSeen:
+                    if droneSeen or not drone.isFlying:
                         dronecolor.framesNotSeen = 0
                     else:
                         dronecolor.framesNotSeen += 1

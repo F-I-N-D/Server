@@ -1,6 +1,6 @@
-# Simulatie protocool
+# Simulatie protocol
 
-Om de simulatie met de server te laten communiceren is het volgende protocool opgesteld. In dit protocool staan alle commando's beschreven die gegeven kunnen worden en de reacties die daarop kunnen worden verwacht.
+Om de simulatie met de server te laten communiceren is het volgende protocol opgesteld. In dit protocol staan alle commando's beschreven die gegeven kunnen worden en de reacties die daarop kunnen worden verwacht.
 
 ## Commando's
 

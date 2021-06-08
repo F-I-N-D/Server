@@ -21,6 +21,7 @@ SCREEN_SIZE_Y = 1080
 MIN_OBSTACLE_DISTANCE = 30
 DEFAULT_CIRCLE_RADIUS = 100
 MAX_AMOUNT_OF_FRAMES_NOT_SEEN = 10
+CALIBRATION_FILE = "ldrCalibrate.csv"
 
 class Swarm(Thread):
     def __init__(self):
@@ -222,7 +223,7 @@ class Swarm(Thread):
                 drone.setTarget(location[index][0], location[index][1])
 
         if self.goal == Goal.Search:
-            f = open("ldrCalibrate.csv", "r")
+            f = open(CALIBRATION_FILE, "r")
             data = f.readlines()
             for droneValue in data:
                 for drone in self.drones:

@@ -84,7 +84,6 @@ class Socket(Thread):
                             "droneId": droneId,
                             "velocityX": drone.velocityX,
                             "velocityY": drone.velocityY,
-                            "velocityZ": drone.velocityZ,
                             "rate": drone.rate
                         }
 
@@ -133,8 +132,10 @@ class Socket(Thread):
                             elif newVariableName == "ldr":
                                 drone.ldr = newData[newVariableName]
                         self.sendResponse(client, { "set": True })
-                    else:
+                    elif not drone:
                         self.sendError(client, "invalidDrone")
+                    elif not valid:
+                        self.sendError(client, "invalidData")
                 else:
                     self.sendError(client, "invalidCommand")
             except Exception as e:

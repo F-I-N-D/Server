@@ -96,9 +96,25 @@ class Drone(ABC):
         self.logData()
 
     @abstractmethod
-    def takeOff(self, height: float, velocity: float) -> None:
+    def dataCallback(self, data) -> None:
+        if self.isTumbled:
+            self.kill("Tumbled")
+        elif self.isCharging:
+            self.kill("Charging")
+
+        if self.batteryVoltage < 2.8 and self.batteryVoltage > 0.0:
+            self.kill("Battery low", self.droneId)
+            self.disconnect()
+
+    @abstractmethod
+    def takeOff(self, height: float, velocity: float) -> bool:
         self.logData()
-        self.logger.info("Taking off", self.droneId)
+        self.logger.info(f"Taking off to {height}", self.droneId)
+        if self.batteryVoltage < 3.5 and self.batteryVoltage > 0.0:
+            self.logger.warning("Battery low", self.droneId)
+            self.disconnect()
+            return False
+        return True
 
     @abstractmethod
     def land(self, velocity: float) -> None:
@@ -107,38 +123,6 @@ class Drone(ABC):
 
     @abstractmethod
     def stop(self) -> None:
-        pass
-
-    @abstractmethod
-    def up(self, velocity: float) -> None:
-        pass
-        
-    @abstractmethod
-    def down(self, velocity: float) -> None:
-        pass
-
-    @abstractmethod
-    def forward(self, velocity: float) -> None:
-        pass
-
-    @abstractmethod
-    def backward(self, velocity: float) -> None:
-        pass
-
-    @abstractmethod
-    def left(self, velocity: float) -> None:
-        pass
-
-    @abstractmethod
-    def right(self, velocity: float) -> None:
-        pass
-
-    @abstractmethod
-    def turnLeft(self, rate: float) -> None:
-        pass
-
-    @abstractmethod
-    def turnRight(self, rate: float) -> None:
         pass
 
     @abstractmethod

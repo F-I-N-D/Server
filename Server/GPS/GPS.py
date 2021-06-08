@@ -103,8 +103,9 @@ class GPS(Thread):
                         if(abs(colorList[idx][0] - colorList[nestedIdx][0]) <= 30 and abs(colorList[idx][1] - colorList[nestedIdx][1]) <= 30 and colorList[idx][2] != colorList[nestedIdx][2] and idx != nestedIdx):
                             possibleDrones.append([colorList[idx],colorList[nestedIdx]])
 
-                for drone in possibleDrones:
-                    for dronecolor in self.drones:
+                for dronecolor in self.drones:
+                    droneSeen = False
+                    for drone in possibleDrones:
                         if(drone[0][2] == dronecolor.colorFront and drone[1][2] == dronecolor.colorBack):
                             dronex = int((drone[0][0] + drone[1][0]) / 2)
                             droney = int((drone[0][1] + drone[1][1]) / 2)
@@ -113,3 +114,10 @@ class GPS(Thread):
                             dronecolor.locationX = dronex
                             dronecolor.locationY = droney
                             dronecolor.direction = dronedir
+                            
+                            droneSeen = True
+
+                    if droneSeen or not drone.isFlying:
+                        dronecolor.framesNotSeen = 0
+                    else:
+                        dronecolor.framesNotSeen += 1

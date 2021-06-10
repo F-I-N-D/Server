@@ -109,7 +109,7 @@ class GPS(Thread):
                         if(drone[0][2] == dronecolor.colorFront and drone[1][2] == dronecolor.colorBack):
                             dronex = int((drone[0][0] + drone[1][0]) / 2)
                             droney = int((drone[0][1] + drone[1][1]) / 2)
-                            dronedir = np.arctan2(drone[1][1]-drone[0][1],drone[1][0]-drone[0][0]) * 180 / np.pi
+                            dronedir = int(np.arctan2(drone[1][1]-drone[0][1],drone[1][0]-drone[0][0]) * 180 / np.pi)
 
                             dronecolor.locationX = dronex
                             dronecolor.locationY = droney
@@ -117,7 +117,7 @@ class GPS(Thread):
                             
                             droneSeen = True
 
-                    if droneSeen or not drone.isFlying:
+                    if droneSeen or not dronecolor.isFlying:
                         dronecolor.framesNotSeen = 0
                     else:
                         dronecolor.framesNotSeen += 1

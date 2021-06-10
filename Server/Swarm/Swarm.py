@@ -11,8 +11,8 @@ from Server.Drone.SoftwareDrone import SoftwareDrone
 from Server.Swarm.Action import Action
 from Server.Swarm.Goal import Goal
 
-DRONE_HEIGHT = 50
-MASTER_LOWER_HEIGHT = 15
+DRONE_HEIGHT = 80
+MASTER_LOWER_HEIGHT = 0
 DRONE_DISTANCE = 100
 DRONE_DISTANCE_CIRCLE = 120
 BORDER_WIDTH_X = 300
@@ -233,7 +233,7 @@ class Swarm(Thread):
                         drone.ldrMax = float(splittedValue[1])
                         
         while self.goal != None:
-            self.safetyCheck()
+            # self.safetyCheck()
 
             if self.goal == Goal.Search and targetReached:
                 location = self.getSearchLocations(itteration)
@@ -266,12 +266,14 @@ class Swarm(Thread):
 
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
                     drone.kill("Drone is no longer seen by the GPS")
+                    self.drones.remove(drone)
+                    continue
 
                 if not drone.isConnected():
                     self.drones.remove(drone)
                     continue
 
-                if not drone.targetReached:
+                if not drone.targetReached and drone.isFlying:
                     targetReached = False
 
                 if self.goal == Goal.Calibrate:
@@ -279,7 +281,7 @@ class Swarm(Thread):
                         drone.ldrMax = drone.ldr
 
                 if self.goal == Goal.Search:
-                    if drone.ldr > drone.ldrMax * 1.2 and drone.ldrMax != 0:
+                    if drone.ldr > drone.ldrMax * 1.1 and drone.ldrMax != 0:
                         self.goal = Goal.FollowTarget
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]

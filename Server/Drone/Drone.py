@@ -142,7 +142,7 @@ class Drone(ABC):
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         pass
 
-    def adjust(self, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
+    def adjust(self, adjustX: float = 0, adjustY: float = 0, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
         differenceX = self.targetLocationX - self.locationX
         differenceY = self.targetLocationY - self.locationY
         differenceZ = self.targetLocationZ - self.locationZ
@@ -203,7 +203,7 @@ class Drone(ABC):
         elif self.direction < -10:
             newRate = rate
 
-        self.move(velocityX, velocityY, 0, newRate)
+        self.move(velocityX+adjustX, velocityY+adjustY, 0, newRate)
 
     def setTarget(self, targetLocationX, targetLocationY, targetLocationZ):
         self.targetLocationX = targetLocationX

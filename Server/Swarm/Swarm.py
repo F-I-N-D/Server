@@ -259,7 +259,9 @@ class Swarm(Thread):
             targetReached = True
             
             for drone in self.drones:
-                drone.adjust()
+
+                adjustmentVariables[] = collisionAdjust(drone)
+                drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
                     drone.kill("Drone is no longer seen by the GPS")
@@ -443,3 +445,32 @@ class Swarm(Thread):
             if drone.locationY < (BORDER_WIDTH_Y / 2) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 2)):
                 #kill any drones getting too close to exiting the top and bottom of the frame
                 drone.kill("Tried to escape")
+        
+    def collisionAdjust(self, drone1: Drone) -> []:
+        collisionDistance = 0
+        adjustVariables = []
+        for drone2 in self.drones:
+            collisionDistance = calculateDistanceBetweenDrones(drone1, drone2)
+            if(collisionDistance < 100):
+                if((drone1.locationX - drone2.locationX) < 0):
+                    #move to back
+                    adjustVariables[0] = -1 * (1.1487^(abs(drone1.locationX - drone2.locationX)) - 1)
+                    if(adjustmentVariables[0] < -3):
+                        adjustmentVariables[0] = -3
+                if((drone1.locationX - drone2.locationX) > 0):
+                    #move to front
+                    if(adjustmentVariables[0] > 3):
+                        adjustmentVariables[0] = 3
+                    adjustVariables[0] = 1.1487^(abs(drone1.locationX - drone2.locationX)) - 1
+                if((drone1.locationY - drone2.locationY) < 0): 
+                    #move to left
+                    adjustVariables[1] = -1 * (1.1487^(abs(drone1.locationX - drone2.locationX)) - 1)
+                    if(adjustmentVariables[1] < -3):
+                        adjustmentVariables[1] = -3
+                if((drone1.locationY - drone2.locationY) > 0): 
+                    #move to right
+                    adjustVariables[1] = 1.1487^(abs(drone1.locationX - drone2.locationX)) - 1
+                    if(adjustmentVariables[1] > 3):
+                        adjustmentVariables[1] = 3
+        return adjustVariables
+

@@ -47,8 +47,8 @@ class Drone(ABC):
         self.distanceLeft = 0
         self.distanceRight = 0
 
-        self.ldr = 0
-        self.ldrMax = 0
+        self.ldr = 0.0
+        self.ldrMax = 0.0
 
         self.framesNotSeen = 0
 

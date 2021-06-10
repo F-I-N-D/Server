@@ -8,6 +8,7 @@ from Server.Socket.Socket import Socket
 from Server.Drone.HardwareDrone import HardwareDrone
 from Server.Drone.SoftwareDrone import SoftwareDrone
 from Server.Logger.Logger import Logger
+from Server.Logger.Level import Level
 from Server.Gui.Gui import Gui, State
 from rich.live import Live
 
@@ -26,7 +27,7 @@ class Server:
         self.swarm = Swarm()
         self.gps = GPS()
         self.socket = Socket(8000)
-        self.logger = Logger()
+        self.logger = Logger(Level.Info)
         self.listener = keyboard.Listener(on_press = self.on_press)
         self.key = None
 
@@ -50,7 +51,7 @@ class Server:
         # self.gps.addDrone(droneTwo)
         # self.socket.addHardwareDrone(droneTwo)
 
-        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow', True)
+        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow')
         self.swarm.addSoftwareDrone(droneThree)
         self.socket.addSoftwareDrone(droneThree)
 
@@ -62,7 +63,7 @@ class Server:
         self.swarm.addSoftwareDrone(droneFive)
         self.socket.addSoftwareDrone(droneFive)
 
-        droneSix = SoftwareDrone('6', self.logger, 'blue', 'yellow')
+        droneSix = SoftwareDrone('6', self.logger, 'blue', 'yellow', True)
         self.swarm.addSoftwareDrone(droneSix)
         self.socket.addSoftwareDrone(droneSix)
 
@@ -70,9 +71,9 @@ class Server:
         self.swarm.addSoftwareDrone(droneSeven)
         self.socket.addSoftwareDrone(droneSeven)
 
-        droneEight = SoftwareDrone('8', self.logger, 'blue', 'yellow')
-        self.swarm.addSoftwareDrone(droneEight)
-        self.socket.addSoftwareDrone(droneEight)
+        # droneEight = SoftwareDrone('8', self.logger, 'blue', 'yellow')
+        # self.swarm.addSoftwareDrone(droneEight)
+        # self.socket.addSoftwareDrone(droneEight)
 
         # self.gps.start()
         self.socket.start()
@@ -83,6 +84,8 @@ class Server:
         # while not self.swarm.isConnected():
         #     print("Connecting...")
         #     time.sleep(2)
+
+        # print("Connected")
 
         # self.swarm.action = Action.Calibrate
 

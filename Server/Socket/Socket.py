@@ -93,7 +93,7 @@ class Socket(Thread):
                 elif request["command"] == "setSoftwareDrone":
                     droneId = request["droneId"]
                     newData = request["data"]
-                    
+
                     drone = self.getSoftwareDrone(droneId)
 
                     valid = True

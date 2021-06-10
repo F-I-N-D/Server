@@ -33,7 +33,7 @@ class HardwareDrone(Drone):
     def isConnected(self) -> bool:
         super().isConnected()
         if self.crazyflie.is_connected():
-            self.logger.info("Connected", self.droneId)
+            # self.logger.info("Connected", self.droneId)
             self.addLogger()
 
         return self.crazyflie.is_connected()
@@ -45,6 +45,7 @@ class HardwareDrone(Drone):
     def kill(self, message: str) -> None:
         super().kill(message)
         self.powerSwitch.stm_power_down()
+        self.disconnect()
 
     def addLogger(self) -> None:
         self.crazyflie.log.add_config(self.log_conf)
@@ -73,8 +74,8 @@ class HardwareDrone(Drone):
 
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
         if not super().takeOff(height, velocity):
-            self.motionCommander.take_off(height / 10, velocity)
             return False
+        self.motionCommander.take_off(height / 100, velocity)
         return True
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:

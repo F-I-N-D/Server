@@ -7,8 +7,8 @@ class SoftwareDrone(Drone):
         self.connected = False
         self.enableConnect = False
 
-        self.velocityX = 0
-        self.velocityY = 0
+        self.velocityX = 0.0
+        self.velocityY = 0.0
         self.rate = 0
 
     def connect(self) -> None:
@@ -71,18 +71,19 @@ class SoftwareDrone(Drone):
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)
-        velocityX = 0
-        velocityY = 0
-        velocityZ = 0
-        newRate = 0
+        self.velocityX = 0
+        self.velocityY = 0
+        self.velocityZ = 0
+        self.newRate = 0
+        self.locationZ = 0
         self.isFlying = False
 
     def stop(self) -> None:
         super().stop()
-        velocityX = 0
-        velocityY = 0
-        velocityZ = 0
-        newRate = 0
+        self.velocityX = 0
+        self.velocityY = 0
+        self.velocityZ = 0
+        self.newRate = 0
 
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)

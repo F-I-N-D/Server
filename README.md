@@ -1,2 +1,2 @@
-# Server
-The server for the drone communication.
+# Server 😎
+😎The server for the drone communication.😎

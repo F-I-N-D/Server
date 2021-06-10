@@ -1,14 +1,18 @@
-from Server.Drone.Drone import Drone
-from Server.Drone.HardwareDrone import HardwareDrone
-from Server.Drone.SoftwareDrone import SoftwareDrone
 import operator
 import time
-import enum
 import math
+import random
 from threading import Thread
 import numpy as np
 
+from Server.Drone.Drone import Drone
+from Server.Drone.HardwareDrone import HardwareDrone
+from Server.Drone.SoftwareDrone import SoftwareDrone
+from Server.Swarm.Action import Action
+from Server.Swarm.Goal import Goal
+
 DRONE_HEIGHT = 50
+MASTER_LOWER_HEIGHT = 15
 DRONE_DISTANCE = 100
 BORDER_WIDTH_X = 300
 BORDER_WIDTH_Y = 200
@@ -16,20 +20,8 @@ SCREEN_SIZE_X = 1920
 SCREEN_SIZE_Y = 1080
 MIN_OBSTACLE_DISTANCE = 30
 DEFAULT_CIRCLE_RADIUS = 100
-
-class Goal(enum.Enum):
-    Search = 0
-    Scatter = 1
-    Calibrate = 2
-    FollowTarget = 3
-
-class Action(enum.Enum):
-    Connect = 10
-    Search = 20
-    Calibrate = 21
-    Scatter = 22
-    Disconnect = 23
-    Kill = 30
+MAX_AMOUNT_OF_FRAMES_NOT_SEEN = 10
+CALIBRATION_FILE = "ldrCalibrate.csv"
 
 class Swarm(Thread):
     def __init__(self):
@@ -215,7 +207,7 @@ class Swarm(Thread):
 
     def fly(self) -> None:
         for drone in self.drones:
-            drone.takeOff(0.8)
+            drone.takeOff(DRONE_HEIGHT - MASTER_LOWER_HEIGHT if drone.master else DRONE_HEIGHT)
 
         time.sleep(1)
 
@@ -228,10 +220,10 @@ class Swarm(Thread):
             location = self.getStartingLocations()
             targetReached = False
             for index, drone in enumerate(self.drones):
-                drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
+                drone.setTarget(location[index][0], location[index][1])
 
         if self.goal == Goal.Search:
-            f = open("ldrCalibrate.csv", "r")
+            f = open(CALIBRATION_FILE, "r")
             data = f.readlines()
             for droneValue in data:
                 for drone in self.drones:
@@ -241,34 +233,27 @@ class Swarm(Thread):
                         
         while self.goal != None:
             self.safetyCheck()
+
             if self.goal == Goal.Search and targetReached:
                 location = self.getSearchLocations(itteration)
-                if location == []:
-                    self.goal = None
-                    continue
-                for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
-                targetReached = False
-                itteration += 1
             elif self.goal == Goal.Calibrate and targetReached:
                 location = self.getCalibrateLocations(itteration)
-                if location == []:
-                    self.goal = None
-                    continue
-                for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
-                targetReached = False
-                itteration += 1
             elif self.goal == Goal.Scatter and targetReached:
-                pass
+                location = self.getScatterLocations(itteration)
             elif self.goal == Goal.FollowTarget and targetReached:
                 location = self.getCircleLocations(targetLocation[0], targetLocation[1])
+
+            if targetReached:       
                 if location == []:
+                    if self.goal == Goal.Calibrate:
+                        f = open("ldrCalibrate.csv", "w")
+                        for drone in self.drones:
+                            f.write(f"{drone.droneId},{drone.ldrMax}\n")
+                        f.close
                     self.goal = None
                     continue
                 for index, drone in enumerate(self.drones):
-                    drone.setTarget(location[index][0], location[index][1], DRONE_HEIGHT - 15 if drone.master else DRONE_HEIGHT)
-                targetReached = False
+                    drone.setTarget(location[index][0], location[index][1])
                 itteration += 1
 
             targetReached = True
@@ -277,6 +262,13 @@ class Swarm(Thread):
 
                 adjustmentVariables[] = collisionAdjust(drone)
                 drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
+
+                if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
+                    drone.kill("Drone is no longer seen by the GPS")
+
+                if not drone.isConnected():
+                    self.drones.remove(drone)
+                    continue
 
                 if not drone.targetReached:
                     targetReached = False
@@ -287,7 +279,6 @@ class Swarm(Thread):
 
                 if self.goal == Goal.Search:
                     if drone.ldr > drone.ldrMax * 1.2 and drone.ldrMax != 0:
-                        print("Hi")
                         self.goal = Goal.FollowTarget
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]
@@ -312,14 +303,7 @@ class Swarm(Thread):
 
             time.sleep(0.05)
 
-        time.sleep(1)
         self.land()
-
-        if self.action == Action.Calibrate:
-            f = open("ldrCalibrate.csv", "w")
-            for drone in self.drones:
-                f.write(f"{drone.droneId},{drone.ldrMax}\n")
-            f.close
 
     @staticmethod
     def calculateDistanceBetweenDrones(droneOne: Drone, droneTwo: Drone) -> int:
@@ -332,20 +316,20 @@ class Swarm(Thread):
     def disconnect(self):
         for drone in self.drones:
             drone.disconnect()
-
+            
     def kill(self):
         for drone in self.drones:
-            drone.kill()
+            drone.kill("Manual")
 
     def getStartingLocations(self) -> []:
         startCoordinates = []
         for index, drone in enumerate(self.drones):
-            xLocation = BORDER_WIDTH_X
-            yLocation = BORDER_WIDTH_Y + (DRONE_DISTANCE * index)
-            startCoordinates.append([xLocation, yLocation])
+            locationX = BORDER_WIDTH_X
+            locationY = BORDER_WIDTH_Y + (DRONE_DISTANCE * index)
+            startCoordinates.append([locationX, locationY])
         return startCoordinates
 
-    def getCalibrateLocations(self, itteration) -> []:
+    def getCalibrateLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
         coordinates = []
@@ -363,10 +347,11 @@ class Swarm(Thread):
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, BORDER_WIDTH_Y])
             coordinates += startCoordinates
         elif itteration >= 3:
-            if itteration > 2 + numberOfDrones:
+            if itteration > numberOfDrones + 3:
                 return []
 
-            coordinates += startCoordinates[::-1][0:itteration-2][::-1]
+            nextDronePlace = max(numberOfDrones - itteration, 0)
+            coordinates += startCoordinates[nextDronePlace:nextDronePlace + itteration - 3]
             coordinates.append([BORDER_WIDTH_X, SCREEN_SIZE_Y - BORDER_WIDTH_Y])
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, SCREEN_SIZE_Y - BORDER_WIDTH_Y])
             coordinates.append([SCREEN_SIZE_X - BORDER_WIDTH_X, BORDER_WIDTH_Y])
@@ -374,49 +359,53 @@ class Swarm(Thread):
 
         return coordinates
 
-    def getSearchLocations(self, itteration) -> []:
+    def getSearchLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
         coordinates = []
+        step = itteration % 2
 
-        if itteration % 2 != 0:
+        if self.drones[-1].locationY >= SCREEN_SIZE_Y - BORDER_WIDTH_Y - 50 and step == 1:
+            return []
+
+        if step == 1:
             # shift swarm to right
-            # self.drones.find(self.masterDrone)
             numDronesToSidesOfMaster = int((numberOfDrones - 1) / 2)
 
-            xLocation = self.masterDrone.locationX
+            locationX = self.masterDrone.locationX
             newMasterY = self.masterDrone.locationY + numberOfDrones * DRONE_DISTANCE
             if newMasterY + ((numberOfDrones * DRONE_DISTANCE) / 2) > SCREEN_SIZE_Y - BORDER_WIDTH_Y:
                 for index, drone in enumerate(self.drones):
-                    yLocation = (SCREEN_SIZE_Y - BORDER_WIDTH_Y) - DRONE_DISTANCE * index
-                    coordinates.append([xLocation, yLocation])
+                    locationY = (SCREEN_SIZE_Y - BORDER_WIDTH_Y) - DRONE_DISTANCE * index
+                    coordinates.append([locationX, locationY])
+                coordinates = coordinates[::-1]
             else:
                 for index in range(numDronesToSidesOfMaster):
-                    yLocation = newMasterY - (DRONE_DISTANCE * (index + 1))
-                    coordinates.append([xLocation, yLocation])
-                ylocation = newMasterY
-                coordinates.append([xLocation, yLocation])
+                    locationY = newMasterY - (DRONE_DISTANCE * (index + 1))
+                    coordinates.append([locationX, locationY])
+                locationY = newMasterY
+                coordinates.append([locationX, locationY])
                 for index in range(numDronesToSidesOfMaster):
-                    yLocation = newMasterY + (DRONE_DISTANCE * (index + 1))
-                    coordinates.append([xLocation, yLocation])
+                    locationY = newMasterY + (DRONE_DISTANCE * (index + 1))
+                    coordinates.append([locationX, locationY])
         else:
             #move swarm forwards or backwards
             if self.masterDrone.locationX < (BORDER_WIDTH_X + 100):
                 #swarm is on bottom side of searching location, move forwards
                 for index, drone in enumerate(self.drones):
-                    xLocation = SCREEN_SIZE_X - BORDER_WIDTH_X
-                    yLocation = drone.locationY
-                    coordinates.append([xLocation, yLocation])
+                    locationX = SCREEN_SIZE_X - BORDER_WIDTH_X
+                    locationY = drone.locationY
+                    coordinates.append([locationX, locationY])
 
             elif self.masterDrone.locationX > (BORDER_WIDTH_X - 100):
                 #swarm is on top side of searching location, move backwards
                 for index, drone in enumerate(self.drones):
-                    xLocation = BORDER_WIDTH_X
-                    yLocation = drone.locationY
-                    coordinates.append([xLocation, yLocation])
+                    locationX = BORDER_WIDTH_X
+                    locationY = drone.locationY
+                    coordinates.append([locationX, locationY])
         return coordinates
 
-    def getCircleLocations(self, locationX, locationY) -> []:
+    def getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
         vector = np.array([DEFAULT_CIRCLE_RADIUS, 0])
         centerPoint = np.array([locationX, locationY])
@@ -433,14 +422,25 @@ class Swarm(Thread):
 
         return resultArray
 
+    def getScatterLocations(self, itteration: int) -> []:
+        if itteration > 0:
+            return []
+
+        scatterLocations = []
+
+        for drone in self.drones:
+            locationX = random.randint(BORDER_WIDTH_X, SCREEN_SIZE_X - BORDER_WIDTH_X)
+            locationY = random.randint(BORDER_WIDTH_Y, SCREEN_SIZE_Y - BORDER_WIDTH_Y)
+            scatterLocations.append([locationX, locationY])
+        return scatterLocations
+
     def safetyCheck(self):
         numberOfDrones = len(self.drones)
-        for drone in enumerate(self.drones):
-            if drone.xLocation < (BORDER_WIDTH_X / 2) or drone.xLocation > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 2)):
+        for drone in self.drones:
+            if drone.locationX < (BORDER_WIDTH_X / 2) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 2)):
                 #kill any drones getting too close to exiting the left and right of the frame
-                drone.kill()
-                print(f"Drone: {drone.droneId} tried to escape and has been terminated.")
-            if drone.yLocation < (BORDER_WIDTH_Y / 2) or drone.yLocation > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 2)):
+                drone.kill("Tried to escape")
+            if drone.locationY < (BORDER_WIDTH_Y / 2) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 2)):
                 #kill any drones getting too close to exiting the top and bottom of the frame
                 drone.kill("Tried to escape")
         
@@ -471,6 +471,4 @@ class Swarm(Thread):
                     if(adjustmentVariables[1] > 3):
                         adjustmentVariables[1] = 3
         return adjustVariables
-            #niet meer adjusten dan 0.3
-            #adjust aanpassen op afstand
-            # adjust speed = 1.1487^x -1
+

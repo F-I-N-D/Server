@@ -54,25 +54,20 @@ class GPS(Thread):
                 
                 # For red color
                 red_mask = cv2.dilate(red_mask, kernal)
-                res_red = cv2.bitwise_and(imageFrame, imageFrame, 
-                                        mask = red_mask)
+                res_red = cv2.bitwise_and(imageFrame, imageFrame, mask = red_mask)
 
                 # For green color
                 green_mask = cv2.dilate(green_mask, kernal)
-                res_green = cv2.bitwise_and(imageFrame, imageFrame,
-                                            mask = green_mask)
+                res_green = cv2.bitwise_and(imageFrame, imageFrame, mask = green_mask)
                 
                 # For blue color
                 blue_mask = cv2.dilate(blue_mask, kernal)
-                res_blue = cv2.bitwise_and(imageFrame, imageFrame,
-                                        mask = blue_mask)
+                res_blue = cv2.bitwise_and(imageFrame, imageFrame, mask = blue_mask)
             
                 colorList = []
 
                 # Creating contour to track red color
-                contours, hierarchy = cv2.findContours(red_mask,
-                                                    cv2.RETR_TREE,
-                                                    cv2.CHAIN_APPROX_SIMPLE)
+                contours, hierarchy = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
                 for pic, contour in enumerate(contours):
                     area = cv2.contourArea(contour)
@@ -82,9 +77,7 @@ class GPS(Thread):
                         imageFrame = cv2.circle(imageFrame, (x+int(w/2),y+int(h/2)), radius=30, color=(0, 0, 255), thickness=10)     
             
                 # Creating contour to track green color
-                contours, hierarchy = cv2.findContours(green_mask,
-                                                    cv2.RETR_TREE,
-                                                    cv2.CHAIN_APPROX_SIMPLE)
+                contours, hierarchy = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                 
                 for pic, contour in enumerate(contours):
                     area = cv2.contourArea(contour)
@@ -94,9 +87,7 @@ class GPS(Thread):
                         imageFrame = cv2.circle(imageFrame, (x+int(w/2),y+int(h/2)), radius=30, color=(0, 255, 0), thickness=10)
             
                 # Creating contour to track blue color
-                contours, hierarchy = cv2.findContours(blue_mask,
-                                                    cv2.RETR_TREE,
-                                                    cv2.CHAIN_APPROX_SIMPLE)
+                contours, hierarchy = cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
                 for pic, contour in enumerate(contours):
                     area = cv2.contourArea(contour)
@@ -112,8 +103,9 @@ class GPS(Thread):
                         if(abs(colorList[idx][0] - colorList[nestedIdx][0]) <= 30 and abs(colorList[idx][1] - colorList[nestedIdx][1]) <= 30 and colorList[idx][2] != colorList[nestedIdx][2] and idx != nestedIdx):
                             possibleDrones.append([colorList[idx],colorList[nestedIdx]])
 
-                for drone in possibleDrones:
-                    for dronecolor in self.drones:
+                for dronecolor in self.drones:
+                    droneSeen = False
+                    for drone in possibleDrones:
                         if(drone[0][2] == dronecolor.colorFront and drone[1][2] == dronecolor.colorBack):
                             dronex = int((drone[0][0] + drone[1][0]) / 2)
                             droney = int((drone[0][1] + drone[1][1]) / 2)
@@ -122,3 +114,10 @@ class GPS(Thread):
                             dronecolor.locationX = dronex
                             dronecolor.locationY = droney
                             dronecolor.direction = dronedir
+                            
+                            droneSeen = True
+
+                    if droneSeen or not drone.isFlying:
+                        dronecolor.framesNotSeen = 0
+                    else:
+                        dronecolor.framesNotSeen += 1

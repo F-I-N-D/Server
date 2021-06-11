@@ -2,6 +2,7 @@ import socket
 import time
 import json
 from threading import Thread
+
 from Server.Drone.Drone import Drone
 from Server.Drone.HardwareDrone import HardwareDrone
 from Server.Drone.SoftwareDrone import SoftwareDrone
@@ -72,7 +73,7 @@ class Socket(Thread):
                     self.__sendResponse(client, jsonObject)
                 elif request["command"] == "connectSoftwareDrone":
                     droneId = request["droneId"]
-                    drone = self.getSoftwareDrone(droneId)
+                    drone = self.__getSoftwareDrone(droneId)
 
                     if drone:
                         if drone.enableConnect:
@@ -84,7 +85,7 @@ class Socket(Thread):
                         self.__sendError(client, "invalidDrone")
                 elif request["command"] == "getSoftwareDroneVelocity":
                     droneId = request["droneId"]
-                    drone = self.getSoftwareDrone(droneId)
+                    drone = self.__getSoftwareDrone(droneId)
 
                     if drone:
                         returnValue = {
@@ -101,7 +102,7 @@ class Socket(Thread):
                     droneId = request["droneId"]
                     newData = request["data"]
 
-                    drone = self.getSoftwareDrone(droneId)
+                    drone = self.__getSoftwareDrone(droneId)
 
                     valid = True
                     for newVariableName in newData:
@@ -121,7 +122,7 @@ class Socket(Thread):
                 self.clientConnected = False
     
     # Get the software drone
-    def getSoftwareDrone(self, droneId: str) -> Drone:
+    def __getSoftwareDrone(self, droneId: str) -> Drone:
         currentDrone = None
 
         for drone in self.softwareDrones:

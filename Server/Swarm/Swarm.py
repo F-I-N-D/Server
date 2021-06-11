@@ -365,17 +365,22 @@ class Swarm(Thread):
         adjustmentVariables = [0, 0]
         return adjustmentVariables
 
-    def calculateOptimalPlaces(self) -> None:
-        self.drones = []
+    @staticmethod
+    def calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
+        return math.sqrt(pow(drone.locationX - point[0], 2) + pow(drone.locationY - point[1], 2))
 
+    def calculateOptimalPlaces(self) -> None:
+        self.drones = self.softwareDrones + self.hardwareDrones + [self.masterDrone]
         startingLocations = self.getStartingLocations()
-        
+        softwareDrones = self.softwareDrones
+        hardwareDrones = self.hardwareDrones
+
         if not self.masterDrone:
             raise ValueError("No hardware drone set")
             return
 
-        numberOfHardwareDrones = len(self.hardwareDrones)
-        numberOfSoftwareDrones = len(self.softwareDrones)
+        numberOfHardwareDrones = len(hardwareDrones)
+        numberOfSoftwareDrones = len(softwareDrones)
         numberOfDrones = numberOfHardwareDrones + numberOfSoftwareDrones + 1
 
         if self.masterDroneIsHardware:
@@ -384,104 +389,128 @@ class Swarm(Thread):
         else:
             masterDroneIndex = int(numberOfSoftwareDrones / 2)
             numberOfSoftwareDrones += 1
+        
+        if numberOfHardwareDrones - numberOfSoftwareDrones >= 2 or numberOfHardwareDrones - numberOfSoftwareDrones <= -2 \
+            and numberOfHardwareDrones != 0 and numberOfHardwareDrones != 0:
+            raise ValueError("This swarm is not valid")
+            return
 
         droneOrder = {}
-        if numberOfHardwareDrones == numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
+        if numberOfHardwareDrones == numberOfSoftwareDrones or numberOfHardwareDrones > numberOfSoftwareDrones:
+            if self.masterDroneIsHardware:
+                droneOrder[masterDroneIndex * 2] = self.masterDrone
+            else:
+                droneOrder[masterDroneIndex * 2 + 1] = self.masterDrone
 
-                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
+            for index in range(len(hardwareDrones)):
+                index = index * 2
+                if self.masterDroneIsHardware:
+                    index = index + 2 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
 
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
+                for drone in hardwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
 
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
+                droneOrder[index] = closestDrone
+                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
+
+            for index in range(len(softwareDrones)):
+                index = index * 2 + 1
+                if not self.masterDroneIsHardware:
+                    index = index + 2 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
+
+                for drone in softwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
+
+                droneOrder[index] = closestDrone
+                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
         elif numberOfSoftwareDrones == 0:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
+            droneOrder[masterDroneIndex] = self.masterDrone
 
-                if index == masterDroneIndex and self.masterDroneIsHardware:
-                    droneOrder[index] = self.masterDrone
-                    droneOrder[index + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index] = drone
+            for index in range(len(hardwareDrones)):
+                index = index + 1 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
+
+                for drone in hardwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
+
+                droneOrder[index] = closestDrone
+                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
         elif numberOfHardwareDrones == 0:
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
+            droneOrder[masterDroneIndex] = self.masterDrone
 
-                if index == masterDroneIndex and not self.masterDroneIsHardware:
-                    droneOrder[index] = self.masterDrone
-                    droneOrder[index + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index] = drone
-        elif numberOfHardwareDrones > numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
+            for index in range(len(softwareDrones)):
+                index = index + 1 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
 
-                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
+                for drone in softwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
 
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
+                droneOrder[index] = closestDrone
+                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
         elif numberOfHardwareDrones < numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
+            if not self.masterDroneIsHardware:
+                droneOrder[masterDroneIndex * 2] = self.masterDrone
+            else:
+                droneOrder[masterDroneIndex * 2 + 1] = self.masterDrone
 
-                if index * 2 == masterDroneIndex * 2 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
+            for index in range(len(softwareDrones)):
+                index = index * 2
+                if not self.masterDroneIsHardware:
+                    index = index + 2 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
 
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
+                for drone in softwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
 
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
+                droneOrder[index] = closestDrone
+                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
 
+            for index in range(len(hardwareDrones)):
+                index = index * 2 + 1
+                if self.masterDroneIsHardware:
+                    index = index + 2 if index >= masterDroneIndex else index
+                point = startingLocations[index]
+                shortestDistance = 0
+                closestDrone = None
+
+
+                for drone in hardwareDrones:
+                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                    if shortestDistance < distance or shortestDistance == 0:
+                        shortestDistance = distance
+                        closestDrone = drone
+
+                droneOrder[index] = closestDrone
+                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
+
+        self.drones = []
         sortedDroneOrder = sorted(droneOrder.keys())
         for drone in sortedDroneOrder:
             self.drones.append(droneOrder[drone])

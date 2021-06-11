@@ -33,7 +33,6 @@ class HardwareDrone(Drone):
     def isConnected(self) -> bool:
         super().isConnected()
         if self.crazyflie.is_connected():
-            # self.logger.info("Connected", self.droneId)
             self.addLogger()
 
         return self.crazyflie.is_connected()
@@ -65,10 +64,10 @@ class HardwareDrone(Drone):
         self.ldr = data['ExternalSensors.LDR']
 
         if self.master:
-            self.distanceFront = data['range.front']
-            self.distanceBack = data['range.back']
-            self.distanceLeft = data['range.left']
-            self.distanceRight = data['range.right']
+            self.distanceFront = int(data['range.front'] / 10)
+            self.distanceBack = int(data['range.back'] / 10)
+            self.distanceLeft = int(data['range.left'] / 10)
+            self.distanceRight = int(data['range.right'] / 10)
 
         super().dataCallback(data)
 

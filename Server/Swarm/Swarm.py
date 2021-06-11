@@ -10,6 +10,7 @@ from Server.Drone.HardwareDrone import HardwareDrone
 from Server.Drone.SoftwareDrone import SoftwareDrone
 from Server.Swarm.Action import Action
 from Server.Swarm.Goal import Goal
+from Server.Logger.Logger import Logger
 
 DRONE_HEIGHT = 80
 MASTER_LOWER_HEIGHT = 0
@@ -25,7 +26,7 @@ MAX_AMOUNT_OF_FRAMES_NOT_SEEN = 10
 CALIBRATION_FILE = "ldrCalibrate.csv"
 
 class Swarm(Thread):
-    def __init__(self):
+    def __init__(self, logger: Logger):
         Thread.__init__(self)
         self.__isRunnning = False
         self.softwareDrones = []
@@ -35,6 +36,7 @@ class Swarm(Thread):
         self.masterDrone = None
         self.goal = None
         self.action = None
+        self.logger = logger
     
     def stop(self) -> None:
         self.__isRunnning = False
@@ -46,140 +48,34 @@ class Swarm(Thread):
 
         while self.__isRunnning:
             if self.action == Action.Connect:
+                self.logger.info("Connecting to all drones")
+                self.calculateOptimalPlaces()
                 self.connect()
                 self.action = None
             elif self.action == Action.Search:
+                self.logger.info("Starting search")
                 self.goal = Goal.Search
                 self.fly()
                 self.action = None
+                self.logger.info("Search done")
             elif self.action == Action.Calibrate:
+                self.logger.info("Starting calibrate")
                 self.goal = Goal.Calibrate
                 self.fly()
                 self.action = None
+                self.logger.info("Calibrate done")
             elif self.action == Action.Scatter:
+                self.logger.info("Starting scatter")
                 self.goal = Goal.Scatter
                 self.fly()
                 self.action = None
+                self.logger.info("Scatter done")
             elif self.action == Action.Disconnect:
+                self.logger.info("Disconnecting to all drones")
                 self.disconnect()
-                self.action = None
-            elif self.action == Action.Kill:
                 self.action = None
             else:
                 time.sleep(0.1)
-
-    def calculateOptimalPlaces(self) -> None:
-        numberOfHardwareDrones = len(self.hardwareDrones)
-        numberOfSoftwareDrones = len(self.softwareDrones)
-        numberOfDrones = numberOfHardwareDrones + numberOfSoftwareDrones + 1
-
-        if self.masterDroneIsHardware:
-            masterDroneIndex = int(numberOfHardwareDrones / 2)
-            numberOfHardwareDrones += 1
-        else:
-            masterDroneIndex = int(numberOfSoftwareDrones / 2)
-            numberOfSoftwareDrones += 1
-
-        droneOrder = {}
-        if numberOfHardwareDrones == numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
-
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
-        elif numberOfSoftwareDrones == 0:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index == masterDroneIndex and self.masterDroneIsHardware:
-                    droneOrder[index] = self.masterDrone
-                    droneOrder[index + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index] = drone
-        elif numberOfHardwareDrones == 0:
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index == masterDroneIndex and not self.masterDroneIsHardware:
-                    droneOrder[index] = self.masterDrone
-                    droneOrder[index + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index] = drone
-        elif numberOfHardwareDrones > numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
-
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
-        elif numberOfHardwareDrones < numberOfSoftwareDrones:
-            masterDroneSet = False
-            for index, drone in enumerate(self.softwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 == masterDroneIndex * 2 and not self.masterDroneIsHardware:
-                    droneOrder[index * 2] = self.masterDrone
-                    droneOrder[(index + 1) * 2] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2] = drone
-
-            for index, drone in enumerate(self.hardwareDrones):
-                if masterDroneSet:
-                    index += 1
-
-                if index * 2 + 1 == masterDroneIndex * 2 + 1 and self.masterDroneIsHardware:
-                    droneOrder[index * 2 + 1] = self.masterDrone
-                    droneOrder[(index + 1) * 2 + 1] = drone
-                    masterDroneSet = True
-                else:
-                    droneOrder[index * 2 + 1] = drone
-
-        sortedDroneOrder = sorted(droneOrder.keys())
-        for drone in sortedDroneOrder:
-            self.drones.append(droneOrder[drone])
 
     def addSoftwareDrone(self, drone: SoftwareDrone) -> None:
         if drone.master:
@@ -204,6 +100,7 @@ class Swarm(Thread):
             if not drone.isConnected():
                 return False
 
+        self.logger.info("All drones connected")
         return True
 
     def fly(self) -> None:
@@ -233,8 +130,6 @@ class Swarm(Thread):
                         drone.ldrMax = float(splittedValue[1])
                         
         while self.goal != None:
-            # self.safetyCheck()
-
             if self.goal == Goal.Search and targetReached:
                 location = self.getSearchLocations(itteration)
             elif self.goal == Goal.Calibrate and targetReached:
@@ -260,17 +155,25 @@ class Swarm(Thread):
             targetReached = True
             
             for drone in self.drones:
-
-                adjustmentVariables[] = collisionAdjust(drone)
+                adjustmentVariables = self.collisionAdjust(drone)
                 drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
                     drone.kill("Drone is no longer seen by the GPS")
-                    self.drones.remove(drone)
+                    self.removeDroneFromList(drone)
+                    continue
+
+                if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
+                    drone.kill("Tried to escape on x")
+                    self.removeDroneFromList(drone)
+                    continue
+                elif drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
+                    drone.kill("Tried to escape on y")
+                    self.removeDroneFromList(drone)
                     continue
 
                 if not drone.isConnected():
-                    self.drones.remove(drone)
+                    self.removeDroneFromList(drone)
                     continue
 
                 if not drone.targetReached and drone.isFlying:
@@ -286,23 +189,20 @@ class Swarm(Thread):
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]
 
-                # Dit herschrijven zodat de bounding box ook wordt aangepast? Of in ieder geval dat de drone niet gelijk de target haalt
-                # maar dat hij eerst dan wel naar zijn Y gaat en X dan laat gaan bijvoorbeeld
-                # if drone.master:
-                #     if 0 < drone.distanceFront < MIN_OBSTACLE_DISTANCE or 0 < drone.distanceBack < MIN_OBSTACLE_DISTANCE or \
-                #     0 < drone.distanceLeft < MIN_OBSTACLE_DISTANCE or 0 < drone.distanceRight < MIN_OBSTACLE_DISTANCE:
-                #         targetReached = True
+                if drone.master:
+                    if (0 < drone.distanceFront < MIN_OBSTACLE_DISTANCE and drone.locationX < drone.targetLocationX) or \
+                        (0 < drone.distanceBack < MIN_OBSTACLE_DISTANCE and drone.locationX > drone.targetLocationX):
+                        for drone in self.drones:
+                            drone.setTarget(drone.locationX, drone.targetLocationY)
 
-                # for comparingDrone in self.drones:
-                #     if drone.droneId == comparingDrone.droneId:
-                #         continue
-
-                #     if 0 < self.calculateDistanceBetweenDrones(drone, comparingDrone) < 50:
-                #         print(self.calculateDistanceBetweenDrones(drone, comparingDrone))
-                #         # Hoeken 90 graden draaien naar buiten dan wel links recht licht aan de richting en de plaats van de drones
+            if self.action == Action.Land:
+                self.logger.info("Landing all drones")
+                self.goal = None
 
             if self.action == Action.Kill:
+                self.logger.info("Killing all drones")
                 self.goal = None
+                self.kill()
 
             time.sleep(0.05)
 
@@ -319,10 +219,15 @@ class Swarm(Thread):
     def disconnect(self):
         for drone in self.drones:
             drone.disconnect()
+            self.removeDroneFromList(drone)
             
     def kill(self):
         for drone in self.drones:
             drone.kill("Manual")
+            self.removeDroneFromList(drone)
+
+    def removeDroneFromList(self, droneToRemove: Drone):
+        self.drones = [drone for drone in self.drones if drone.droneId != droneToRemove.droneId]
 
     def getStartingLocations(self) -> []:
         startCoordinates = []
@@ -438,42 +343,148 @@ class Swarm(Thread):
             locationY = random.randint(BORDER_WIDTH_Y, SCREEN_SIZE_Y - BORDER_WIDTH_Y)
             scatterLocations.append([locationX, locationY])
         return scatterLocations
-
-    def safetyCheck(self):
-        numberOfDrones = len(self.drones)
-        for drone in self.drones:
-            if drone.locationX < (BORDER_WIDTH_X / 2) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 2)):
-                #kill any drones getting too close to exiting the left and right of the frame
-                drone.kill("Tried to escape")
-            if drone.locationY < (BORDER_WIDTH_Y / 2) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 2)):
-                #kill any drones getting too close to exiting the top and bottom of the frame
-                drone.kill("Tried to escape")
         
     def collisionAdjust(self, drone1: Drone) -> []:
         collisionDistance = 0
-        adjustVariables = []
+        adjustmentVariables = [0, 0]
         for drone2 in self.drones:
-            collisionDistance = calculateDistanceBetweenDrones(drone1, drone2)
+            collisionDistance = self.calculateDistanceBetweenDrones(drone1, drone2)
             if(collisionDistance < 100):
                 if((drone1.locationX - drone2.locationX) < 0):
                     #move to back
-                    adjustVariables[0] = -1 * (1.1487^(abs(drone1.locationX - drone2.locationX)) - 1)
-                    if(adjustmentVariables[0] < -3):
-                        adjustmentVariables[0] = -3
+                    adjustmentVariables[0] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1) / 10
                 if((drone1.locationX - drone2.locationX) > 0):
                     #move to front
-                    if(adjustmentVariables[0] > 3):
-                        adjustmentVariables[0] = 3
-                    adjustVariables[0] = 1.1487^(abs(drone1.locationX - drone2.locationX)) - 1
+                    adjustmentVariables[0] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
                 if((drone1.locationY - drone2.locationY) < 0): 
                     #move to left
-                    adjustVariables[1] = -1 * (1.1487^(abs(drone1.locationX - drone2.locationX)) - 1)
-                    if(adjustmentVariables[1] < -3):
-                        adjustmentVariables[1] = -3
+                    adjustmentVariables[1] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
                 if((drone1.locationY - drone2.locationY) > 0): 
                     #move to right
-                    adjustVariables[1] = 1.1487^(abs(drone1.locationX - drone2.locationX)) - 1
-                    if(adjustmentVariables[1] > 3):
-                        adjustmentVariables[1] = 3
-        return adjustVariables
+                    adjustmentVariables[1] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
 
+        adjustmentVariables[0] = max(min(0.5, adjustmentVariables[0]), -0.5)
+        adjustmentVariables[1] = max(min(0.5, adjustmentVariables[1]), -0.5)
+        adjustmentVariables = [0, 0]
+        return adjustmentVariables
+
+    def calculateOptimalPlaces(self) -> None:
+        self.drones = []
+
+        startingLocations = self.getStartingLocations()
+        
+        if not self.masterDrone:
+            raise ValueError("No hardware drone set")
+            return
+
+        numberOfHardwareDrones = len(self.hardwareDrones)
+        numberOfSoftwareDrones = len(self.softwareDrones)
+        numberOfDrones = numberOfHardwareDrones + numberOfSoftwareDrones + 1
+
+        if self.masterDroneIsHardware:
+            masterDroneIndex = int(numberOfHardwareDrones / 2)
+            numberOfHardwareDrones += 1
+        else:
+            masterDroneIndex = int(numberOfSoftwareDrones / 2)
+            numberOfSoftwareDrones += 1
+
+        droneOrder = {}
+        if numberOfHardwareDrones == numberOfSoftwareDrones:
+            masterDroneSet = False
+            for index, drone in enumerate(self.hardwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
+                    droneOrder[index * 2] = self.masterDrone
+                    droneOrder[(index + 1) * 2] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2] = drone
+
+            masterDroneSet = False
+            for index, drone in enumerate(self.softwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
+                    droneOrder[index * 2 + 1] = self.masterDrone
+                    droneOrder[(index + 1) * 2 + 1] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2 + 1] = drone
+        elif numberOfSoftwareDrones == 0:
+            masterDroneSet = False
+            for index, drone in enumerate(self.hardwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index == masterDroneIndex and self.masterDroneIsHardware:
+                    droneOrder[index] = self.masterDrone
+                    droneOrder[index + 1] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index] = drone
+        elif numberOfHardwareDrones == 0:
+            masterDroneSet = False
+            for index, drone in enumerate(self.softwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index == masterDroneIndex and not self.masterDroneIsHardware:
+                    droneOrder[index] = self.masterDrone
+                    droneOrder[index + 1] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index] = drone
+        elif numberOfHardwareDrones > numberOfSoftwareDrones:
+            masterDroneSet = False
+            for index, drone in enumerate(self.hardwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 == masterDroneIndex * 2 and self.masterDroneIsHardware:
+                    droneOrder[index * 2] = self.masterDrone
+                    droneOrder[(index + 1) * 2] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2] = drone
+
+            masterDroneSet = False
+            for index, drone in enumerate(self.softwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 + 1 == masterDroneIndex * 2 + 1 and not self.masterDroneIsHardware:
+                    droneOrder[index * 2 + 1] = self.masterDrone
+                    droneOrder[(index + 1) * 2 + 1] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2 + 1] = drone
+        elif numberOfHardwareDrones < numberOfSoftwareDrones:
+            masterDroneSet = False
+            for index, drone in enumerate(self.softwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 == masterDroneIndex * 2 and not self.masterDroneIsHardware:
+                    droneOrder[index * 2] = self.masterDrone
+                    droneOrder[(index + 1) * 2] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2] = drone
+
+            for index, drone in enumerate(self.hardwareDrones):
+                if masterDroneSet:
+                    index += 1
+
+                if index * 2 + 1 == masterDroneIndex * 2 + 1 and self.masterDroneIsHardware:
+                    droneOrder[index * 2 + 1] = self.masterDrone
+                    droneOrder[(index + 1) * 2 + 1] = drone
+                    masterDroneSet = True
+                else:
+                    droneOrder[index * 2 + 1] = drone
+
+        sortedDroneOrder = sorted(droneOrder.keys())
+        for drone in sortedDroneOrder:
+            self.drones.append(droneOrder[drone])

@@ -16,14 +16,9 @@ from rich.spinner import Spinner
 from rich.align import Align
 
 from Server.Swarm.Action import Action
+from Server.Gui.State import State
 
 console = Console()
-
-class State(enum.Enum):
-    Connect = 0
-    Connecting = 1
-    Connected = 2
-    Kill = 3
 
 class Gui:
     def __init__(self):
@@ -34,11 +29,14 @@ class Gui:
         self.buttons = 0
         self.key = None
         self.action = None
+        self.logs = []
+        self.terminalLines = os.get_terminal_size().lines
 
-    def update(self):
+    def update(self) -> bool:
         self.checkInput()
 
         self.layout["header"].update(self.generateHeaderGrid())
+        self.layout["logger"].update(self.generateLoggerArea())
         self.layout["buttons"].update(self.generateButtonArea())
 
         if self.buttonPressed:
@@ -46,26 +44,33 @@ class Gui:
                 if self.buttonSelected == 0:
                     self.action = Action.Connect
                     self.state = State.Connecting
-            elif self.state == State.Connected:
+            elif self.state == State.Actions:
                 if self.buttonSelected == 0:
                     self.action = Action.Search
-                    self.state = State.Kill
+                    self.state = State.FlyingOperations
                 elif self.buttonSelected == 1:
                     self.action = Action.Calibrate
-                    self.state = State.Kill
+                    self.state = State.FlyingOperations
                 elif self.buttonSelected == 2:
                     self.action = Action.Scatter
-                    self.state = State.Kill
+                    self.state = State.FlyingOperations
                 elif self.buttonSelected == 3:
                     self.action = Action.Disconnect
                     self.state = State.Connect
-            elif self.state == State.Kill:
+                elif self.buttonSelected == 4:
+                    return False
+            elif self.state == State.FlyingOperations:
                 if self.buttonSelected == 0:
+                    self.action = Action.Land
+                    self.state = State.Actions
+                elif self.buttonSelected == 1:
                     self.action = Action.Kill
                     self.state = State.Connect
 
             self.buttonSelected = 0
             self.buttonPressed = False
+
+        return True
 
     def generateLayout(self):
         self.layout = Layout(name = "root")
@@ -85,6 +90,11 @@ class Gui:
             datetime.now().ctime().replace(":", "[blink]:[/]"),
         )
         return Panel(grid, style="white on blue")
+
+    def generateLoggerArea(self) -> Panel:
+        if len(self.logs) >= self.terminalLines - 8:
+            self.logs = self.logs[len(self.logs) - (self.terminalLines - 10):]
+        return Panel(Text.from_markup("\n".join(self.logs)), border_style="blue")
 
     def generateButtonArea(self) -> Layout:
         layout = Layout(name = "buttons")
@@ -107,14 +117,15 @@ class Gui:
 
             connectText = Align.center(Text("Connecting...", justify="center"), vertical="middle")
             layout["connecting"].update(Panel(connectText, border_style="blue"))
-        elif self.state == State.Connected:
-            self.buttons = 4
+        elif self.state == State.Actions:
+            self.buttons = 5
 
             layout.split_row(
                 Layout(name="search"),
                 Layout(name="calibrate"),
                 Layout(name="scatter"),
                 Layout(name="disconnect"),
+                Layout(name="close"),
             )
 
             searchText = Align.center(Text("Search", justify="center"), vertical="middle")
@@ -128,15 +139,22 @@ class Gui:
 
             disconnectText = Align.center(Text("Disconnect", justify="center"), vertical="middle")
             layout["disconnect"].update(Panel(disconnectText,border_style=("green" if self.buttonSelected == 3 else "blue")))
-        elif self.state == State.Kill:
-            self.buttons = 1
-
+            
+            closeText = Align.center(Text("Close", justify="center"), vertical="middle")
+            layout["close"].update(Panel(closeText,border_style=("green" if self.buttonSelected == 4 else "blue")))
+        elif self.state == State.FlyingOperations:
+            self.buttons = 2
+    
             layout.split_row(
+                Layout(name="land"),
                 Layout(name="kill")
             )
 
+            landText = Align.center(Text("Land", justify="center"), vertical="middle")
+            layout["land"].update(Panel(landText, border_style=("green" if self.buttonSelected == 0 else "blue")))
+            
             killText = Align.center(Text("Kill", justify="center"), vertical="middle")
-            layout["kill"].update(Panel(killText, border_style=("green" if self.buttonSelected == 0 else "blue")))
+            layout["kill"].update(Panel(killText, border_style=("green" if self.buttonSelected == 1 else "blue")))
         
         return layout
 

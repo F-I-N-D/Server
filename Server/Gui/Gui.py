@@ -32,6 +32,7 @@ class Gui:
         self.logs = []
         self.terminalLines = os.get_terminal_size().lines
 
+    # Update the gui by checkinf for inputs and refreshing the screen
     def update(self) -> bool:
         self.checkInput()
 
@@ -72,6 +73,7 @@ class Gui:
 
         return True
 
+    # Generate GUI layout
     def generateLayout(self):
         self.layout = Layout(name = "root")
 
@@ -81,6 +83,7 @@ class Gui:
             Layout(name="buttons", size = 5),
         )
 
+    # Generate haeader
     def generateHeaderGrid(self) -> Panel:
         grid = Table.grid(expand=True)
         grid.add_column(justify="center", ratio=1)
@@ -91,11 +94,13 @@ class Gui:
         )
         return Panel(grid, style="white on blue")
 
+    # Generate the logging area and fill it with logs
     def generateLoggerArea(self) -> Panel:
         if len(self.logs) >= self.terminalLines - 8:
             self.logs = self.logs[len(self.logs) - (self.terminalLines - 10):]
         return Panel(Text.from_markup("\n".join(self.logs)), border_style="blue")
 
+    # Generate the button area and display the correct buttons
     def generateButtonArea(self) -> Layout:
         layout = Layout(name = "buttons")
 
@@ -158,6 +163,7 @@ class Gui:
         
         return layout
 
+    # Check for inputs and change button on screen
     def checkInput(self):
         if self.key == keyboard.Key.tab:
             self.buttonSelected += 1

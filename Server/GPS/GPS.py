@@ -4,7 +4,11 @@ from Server.Drone.HardwareDrone import HardwareDrone
 import numpy as np
 import cv2
 
+# Constants
 DEFAULT_LIGHT_AREA = 1
+CAMERA = 2
+VIDEO_WIDTH = 1920
+VIDEO_HEIGHT = 1920
 
 class GPS(Thread):
     def __init__(self):
@@ -12,20 +16,25 @@ class GPS(Thread):
         self.__isRunnning = False
         self.drones = []
 
+    # Stop the thread
     def stop(self) -> None:
         self.__isRunnning = False
 
+    # Add a drone to the GPS
     def addDrone(self, drone: HardwareDrone) -> None:
         self.drones.append(drone)
 
+    # Start the thread
     def run(self):
         self.__isRunnning = True
 
-        cap = cv2.VideoCapture(2)
+        # Setup video stream
+        cap = cv2.VideoCapture(CAMERA)
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)
 
+        # Keep the thread running until it is stopped
         while True and self.__isRunnning:
             flag, imageFrame = cap.read()
 
@@ -103,6 +112,8 @@ class GPS(Thread):
                         if(abs(colorList[idx][0] - colorList[nestedIdx][0]) <= 30 and abs(colorList[idx][1] - colorList[nestedIdx][1]) <= 30 and colorList[idx][2] != colorList[nestedIdx][2] and idx != nestedIdx):
                             possibleDrones.append([colorList[idx],colorList[nestedIdx]])
 
+                # Set the location of the seen drones
+                # If the drone is not seen increment theFramesNotSeen variable
                 for dronecolor in self.drones:
                     droneSeen = False
                     for drone in possibleDrones:

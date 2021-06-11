@@ -26,10 +26,12 @@ class HardwareDrone(Drone):
             self.log_conf.add_variable('range.left', 'uint16_t')
             self.log_conf.add_variable('range.right', 'uint16_t')
 
+    # Connect to the drone by opening crazyflie link
     def connect(self) -> None:
         super().connect()
         self.crazyflie.open_link(self.droneId)
 
+    # Check if the drone is connected and connect the logger if it is connected
     def isConnected(self) -> bool:
         super().isConnected()
         if self.crazyflie.is_connected():
@@ -41,16 +43,19 @@ class HardwareDrone(Drone):
         super().disconnect()
         self.crazyflie.close_link()
 
+    # Kill the drone by shutting of the power
     def kill(self, message: str) -> None:
         super().kill(message)
         self.powerSwitch.stm_power_down()
         self.disconnect()
 
+    # Add a logger and his callback
     def addLogger(self) -> None:
         self.crazyflie.log.add_config(self.log_conf)
         self.log_conf.data_received_cb.add_callback(self.dataCallback)
         self.log_conf.start()
 
+    # Save data on data callback
     def dataCallback(self, timestamp, data, logconf) -> None:
         self.batteryVoltage = data['pm.vbat']
         self.isCharging = True if data['pm.state'] == 1 else False
@@ -71,6 +76,7 @@ class HardwareDrone(Drone):
 
         super().dataCallback(data)
 
+    # Take off to predefined height
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
         if not super().takeOff(height, velocity):
             return False
@@ -85,6 +91,7 @@ class HardwareDrone(Drone):
         super().stop()
         self.motionCommander.stop()
 
+    # Hove in the direction of the target by adjusting the velocity
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)
         self.motionCommander._set_vel_setpoint(velocityX, velocityY, velocityZ, rate)

@@ -6,6 +6,7 @@ from Server.Drone.Drone import Drone
 from Server.Drone.HardwareDrone import HardwareDrone
 from Server.Drone.SoftwareDrone import SoftwareDrone
 
+# Constants
 ADJUSTABLE_VARIABLES = [
     "batteryVoltage",
     "isCharging",
@@ -33,36 +34,42 @@ class Socket(Thread):
         self.socket.bind(('', port))
         self.clientConnected = False
 
+    # Stop the thread
     def stop(self) -> None:
         self.__isRunnning = False
         self.socket.close()
 
+    # Add a hardware drone
     def addHardwareDrone(self, drone: HardwareDrone) -> None:
         self.hardwareDrones.append(drone)
 
+    # Add a software drone
     def addSoftwareDrone(self, drone: SoftwareDrone) -> None:
         self.softwareDrones.append(drone)
 
+    # Start the thread
     def run(self):
         self.__isRunnning = True
         self.socket.listen(1)
         while self.__isRunnning:
+            # Wait untill client connects
             while not self.clientConnected:
                 client, address = self.socket.accept()
                 self.clientConnected = True
 
             try:
+                # Wait for command and respond with the data
                 request = json.loads(client.recv(1024).decode("utf-8"))
                 if request["command"] == "getSoftwareDrones":
                     jsonObject = []
                     for drone in self.softwareDrones:
-                        jsonObject.append(self.getDroneData(drone))
-                    self.sendResponse(client, jsonObject)
+                        jsonObject.append(self.__getDroneData(drone))
+                    self.__sendResponse(client, jsonObject)
                 elif request["command"] == "getHardwareDrones":
                     jsonObject = []
                     for drone in self.hardwareDrones:
-                        jsonObject.append(self.getDroneData(drone))
-                    self.sendResponse(client, jsonObject)
+                        jsonObject.append(self.__getDroneData(drone))
+                    self.__sendResponse(client, jsonObject)
                 elif request["command"] == "connectSoftwareDrone":
                     droneId = request["droneId"]
                     drone = self.getSoftwareDrone(droneId)
@@ -70,11 +77,11 @@ class Socket(Thread):
                     if drone:
                         if drone.enableConnect:
                             drone.connected = True
-                            self.sendResponse(client, { "connected": True })
+                            self.__sendResponse(client, { "connected": True })
                         else:
-                            self.sendError(client, "notConnecting")
+                            self.__sendError(client, "notConnecting")
                     else:
-                        self.sendError(client, "invalidDrone")
+                        self.__sendError(client, "invalidDrone")
                 elif request["command"] == "getSoftwareDroneVelocity":
                     droneId = request["droneId"]
                     drone = self.getSoftwareDrone(droneId)
@@ -87,9 +94,9 @@ class Socket(Thread):
                             "rate": drone.rate
                         }
 
-                        self.sendResponse(client, returnValue)
+                        self.__sendResponse(client, returnValue)
                     else:
-                        self.sendError(client, "invalidDrone")
+                        self.__sendError(client, "invalidDrone")
                 elif request["command"] == "setSoftwareDrone":
                     droneId = request["droneId"]
                     newData = request["data"]
@@ -103,16 +110,17 @@ class Socket(Thread):
 
                     if valid and drone:
                         drone.dataCallback(newData)
-                        self.sendResponse(client, { "set": True })
+                        self.__sendResponse(client, { "set": True })
                     elif not drone:
-                        self.sendError(client, "invalidDrone")
+                        self.__sendError(client, "invalidDrone")
                     elif not valid:
-                        self.sendError(client, "invalidData")
+                        self.__sendError(client, "invalidData")
                 else:
-                    self.sendError(client, "invalidCommand")
+                    self.__sendError(client, "invalidCommand")
             except Exception as e:
                 self.clientConnected = False
-            
+    
+    # Get the software drone
     def getSoftwareDrone(self, droneId: str) -> Drone:
         currentDrone = None
 
@@ -122,14 +130,17 @@ class Socket(Thread):
 
         return currentDrone
 
-    def sendResponse(self, client, dataObject: object) -> None:
+    # Send response
+    def __sendResponse(self, client, dataObject: object) -> None:
         client.sendall(bytes(json.dumps(dataObject), "utf-8"))
 
-    def sendError(self, client, message: str) -> None:
+    # Send error
+    def __sendError(self, client, message: str) -> None:
         client.sendall(bytes(json.dumps({ "error": message }), "utf-8"))
 
+    # Get data of a drone
     @staticmethod
-    def getDroneData(drone: HardwareDrone) -> object:
+    def __getDroneData(drone: HardwareDrone) -> object:
         return {
             "droneId": drone.droneId,
             "master": drone.master,

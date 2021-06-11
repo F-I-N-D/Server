@@ -12,6 +12,7 @@ from Server.Swarm.Action import Action
 from Server.Swarm.Goal import Goal
 from Server.Logger.Logger import Logger
 
+# Constants
 DRONE_HEIGHT = 80
 MASTER_LOWER_HEIGHT = 0
 DRONE_DISTANCE = 100
@@ -33,49 +34,54 @@ class Swarm(Thread):
         self.drones = []
         self.masterDroneIsHardware = False
         self.masterDrone = None
-        self.goal = None
-        self.action = None
+        self.goal = Goal.Null
+        self.action = Action.Null
         self.logger = logger
     
+    # Stop the thread from running
     def stop(self) -> None:
         self.__isRunnning = False
 
+    # Start the thread
     def run(self):
         self.__isRunnning = True
 
+        # Calcualte best places for all droens
         self.calculateOptimalPlaces()
 
         while self.__isRunnning:
+            # Preform action based on GUI option
             if self.action == Action.Connect:
                 self.logger.info("Connecting to all drones")
                 self.calculateOptimalPlaces()
                 self.connect()
-                self.action = None
+                self.action = Action.Null
             elif self.action == Action.Search:
                 self.logger.info("Starting search")
                 self.goal = Goal.Search
                 self.fly()
-                self.action = None
+                self.action = Action.Null
                 self.logger.info("Search done")
             elif self.action == Action.Calibrate:
                 self.logger.info("Starting calibrate")
                 self.goal = Goal.Calibrate
                 self.fly()
-                self.action = None
+                self.action = Action.Null
                 self.logger.info("Calibrate done")
             elif self.action == Action.Scatter:
                 self.logger.info("Starting scatter")
                 self.goal = Goal.Scatter
                 self.fly()
-                self.action = None
+                self.action = Action.Null
                 self.logger.info("Scatter done")
             elif self.action == Action.Disconnect:
                 self.logger.info("Disconnecting to all drones")
                 self.disconnect()
-                self.action = None
+                self.action = Action.Null
             else:
                 time.sleep(0.1)
 
+    # Add a software drone to the swam
     def addSoftwareDrone(self, drone: SoftwareDrone) -> None:
         if drone.master:
             self.masterDrone = drone
@@ -83,6 +89,7 @@ class Swarm(Thread):
         else:
             self.softwareDrones.append(drone)
 
+    # Add hardware drone to the swam
     def addHardwareDrone(self, drone: HardwareDrone) -> None:
         if drone.master:
             self.masterDrone = drone
@@ -90,10 +97,12 @@ class Swarm(Thread):
         else:
             self.hardwareDrones.append(drone)
 
+    # Connect all drones
     def connect(self) -> None:
         for drone in self.drones:
             drone.connect()
-        
+    
+    # Check if all drones are connected
     def isConnected(self) -> bool:
         for drone in self.drones:
             if not drone.isConnected():
@@ -102,23 +111,25 @@ class Swarm(Thread):
         self.logger.info("All drones connected")
         return True
 
+    # Start flying
     def fly(self) -> None:
+        # Make all drones take off
         for drone in self.drones:
             drone.takeOff(DRONE_HEIGHT - MASTER_LOWER_HEIGHT if drone.master else DRONE_HEIGHT)
-
-        time.sleep(1)
 
         targetReached = True
         location = []
         itteration = 0
         targetLocation = None
 
+        # Go to the starting position if the goal is search or calibrate
         if self.goal == Goal.Search or self.goal == Goal.Calibrate:
             location = self.getStartingLocations()
             targetReached = False
             for index, drone in enumerate(self.drones):
                 drone.setTarget(location[index][0], location[index][1])
 
+        # Load the calibrate data if the goal is search
         if self.goal == Goal.Search:
             f = open(CALIBRATION_FILE, "r")
             data = f.readlines()
@@ -127,8 +138,10 @@ class Swarm(Thread):
                     splittedValue = droneValue.split(',')
                     if drone.droneId == splittedValue[0]:
                         drone.ldrMax = float(splittedValue[1])
-                        
-        while self.goal != None:
+        
+        # Run while a goal needs to be reached
+        while self.goal != Goal.Null:
+            # If target reached get the next location
             if self.goal == Goal.Search and targetReached:
                 location = self.getSearchLocations(itteration)
             elif self.goal == Goal.Calibrate and targetReached:
@@ -139,38 +152,47 @@ class Swarm(Thread):
                 location = self.getCircleLocations(targetLocation[0], targetLocation[1])
 
             if targetReached:       
+                # if there are no new locations save the calibrate data if the drones are calibrating
+                # then set the goal to Null
                 if location == []:
                     if self.goal == Goal.Calibrate:
                         f = open("ldrCalibrate.csv", "w")
                         for drone in self.drones:
                             f.write(f"{drone.droneId},{drone.ldrMax}\n")
                         f.close
-                    self.goal = None
+                    self.goal = Goal.Null
                     continue
+                # Assign a new target to each drone
                 for index, drone in enumerate(self.drones):
                     drone.setTarget(location[index][0], location[index][1])
                 itteration += 1
 
             targetReached = True
             
+            # Check and adjust the speed fo all drones one for one
             for drone in self.drones:
+                # Adjust the speed
                 adjustmentVariables = self.collisionAdjust(drone)
                 drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
+                # If the drone is no longer seen by the camera then it will be killed
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
                     drone.kill("Drone is no longer seen by the GPS")
                     self.removeDroneFromList(drone)
                     continue
 
+                # If the drone trys to excape from the area it will be killed
                 if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
                     drone.kill("Tried to escape on x")
                     self.removeDroneFromList(drone)
                     continue
-                elif drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
+                
+                if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
                     drone.kill("Tried to escape on y")
                     self.removeDroneFromList(drone)
                     continue
 
+                # If the drone is no longer connected it will be removed
                 if not drone.isConnected():
                     self.removeDroneFromList(drone)
                     continue
@@ -178,16 +200,19 @@ class Swarm(Thread):
                 if not drone.targetReached and drone.isFlying:
                     targetReached = False
 
+                # Save highest LDR data if callibrating
                 if self.goal == Goal.Calibrate:
                     if drone.ldr > drone.ldrMax:
                         drone.ldrMax = drone.ldr
 
+                # If goal is search check if the target is found
                 if self.goal == Goal.Search:
                     if drone.ldr > drone.ldrMax * 1.1 and drone.ldrMax != 0:
                         self.goal = Goal.FollowTarget
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]
 
+                # The master drone will check if the swarm is almost bumping into something
                 if drone.master:
                     if (0 < drone.distanceFront < MIN_OBSTACLE_DISTANCE and drone.locationX < drone.targetLocationX) or \
                         (0 < drone.distanceBack < MIN_OBSTACLE_DISTANCE and drone.locationX > drone.targetLocationX):
@@ -196,38 +221,49 @@ class Swarm(Thread):
 
             if self.action == Action.Land:
                 self.logger.info("Landing all drones")
-                self.goal = None
+                self.goal = Goal.Null
 
             if self.action == Action.Kill:
                 self.logger.info("Killing all drones")
-                self.goal = None
+                self.goal = Goal.Null
                 self.kill()
 
             time.sleep(0.05)
 
         self.land()
 
+    # Calculate distance between drones
     @staticmethod
     def calculateDistanceBetweenDrones(droneOne: Drone, droneTwo: Drone) -> int:
         return math.sqrt(pow(droneOne.locationX - droneTwo.locationX, 2) + pow(droneOne.locationY - droneTwo.locationY, 2))
 
+    # Calculate distance between drone and point
+    @staticmethod
+    def calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
+        return math.sqrt(pow(drone.locationX - point[0], 2) + pow(drone.locationY - point[1], 2))
+
+    # Land all drones
     def land(self):
         for drone in self.drones:
             drone.land()
 
+    # Disconnect and remove all drones
     def disconnect(self):
         for drone in self.drones:
             drone.disconnect()
             self.removeDroneFromList(drone)
             
+    # Kill and remove all drones
     def kill(self):
         for drone in self.drones:
             drone.kill("Manual")
             self.removeDroneFromList(drone)
 
+    # Remove drone from the drone list
     def removeDroneFromList(self, droneToRemove: Drone):
         self.drones = [drone for drone in self.drones if drone.droneId != droneToRemove.droneId]
 
+    # Get the starting coordinates for the drones
     def getStartingLocations(self) -> []:
         startCoordinates = []
         for index, drone in enumerate(self.drones):
@@ -236,6 +272,7 @@ class Swarm(Thread):
             startCoordinates.append([locationX, locationY])
         return startCoordinates
 
+    # Get the next calibration locations for the drones
     def getCalibrateLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
@@ -266,6 +303,7 @@ class Swarm(Thread):
 
         return coordinates
 
+    # Get the next search locations for the drones
     def getSearchLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
         startCoordinates = self.getStartingLocations()
@@ -312,6 +350,7 @@ class Swarm(Thread):
                     coordinates.append([locationX, locationY])
         return coordinates
 
+    # Get the next circle locations for the drones
     def getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
         vector = np.array([DEFAULT_CIRCLE_RADIUS, 0])
@@ -329,6 +368,7 @@ class Swarm(Thread):
 
         return resultArray
 
+    # Get the scatter locations for the drones
     def getScatterLocations(self, itteration: int) -> []:
         if itteration > 0:
             return []
@@ -341,6 +381,7 @@ class Swarm(Thread):
             scatterLocations.append([locationX, locationY])
         return scatterLocations
         
+    # If the drones almost collide move them around each other
     def collisionAdjust(self, drone1: Drone) -> []:
         collisionDistance = 0
         adjustmentVariables = [0, 0]
@@ -365,10 +406,7 @@ class Swarm(Thread):
         adjustmentVariables = [0, 0]
         return adjustmentVariables
 
-    @staticmethod
-    def calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
-        return math.sqrt(pow(drone.locationX - point[0], 2) + pow(drone.locationY - point[1], 2))
-
+    # Calculate the optimal place for the drones so they have to travel as little as possible on startup
     def calculateOptimalPlaces(self) -> None:
         self.drones = self.softwareDrones + self.hardwareDrones + [self.masterDrone]
         startingLocations = self.getStartingLocations()
@@ -376,7 +414,7 @@ class Swarm(Thread):
         hardwareDrones = self.hardwareDrones
 
         if not self.masterDrone:
-            raise ValueError("No hardware drone set")
+            raise ValueError("No master drone set")
             return
 
         numberOfHardwareDrones = len(hardwareDrones)
@@ -389,128 +427,78 @@ class Swarm(Thread):
         else:
             masterDroneIndex = int(numberOfSoftwareDrones / 2)
             numberOfSoftwareDrones += 1
-        
-        if numberOfHardwareDrones - numberOfSoftwareDrones >= 2 or numberOfHardwareDrones - numberOfSoftwareDrones <= -2 \
-            and numberOfHardwareDrones != 0 and numberOfHardwareDrones != 0:
+
+        if (numberOfHardwareDrones - numberOfSoftwareDrones >= 2 or numberOfHardwareDrones - numberOfSoftwareDrones <= -2) \
+            and numberOfHardwareDrones != 0 and numberOfSoftwareDrones != 0:
             raise ValueError("This swarm is not valid")
             return
 
         droneOrder = {}
-        if numberOfHardwareDrones == numberOfSoftwareDrones or numberOfHardwareDrones > numberOfSoftwareDrones:
-            if self.masterDroneIsHardware:
-                droneOrder[masterDroneIndex * 2] = self.masterDrone
-            else:
-                droneOrder[masterDroneIndex * 2 + 1] = self.masterDrone
 
-            for index in range(len(hardwareDrones)):
-                index = index * 2
-                if self.masterDroneIsHardware:
-                    index = index + 2 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-                for drone in hardwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
-
-            for index in range(len(softwareDrones)):
-                index = index * 2 + 1
-                if not self.masterDroneIsHardware:
-                    index = index + 2 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-                for drone in softwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
-        elif numberOfSoftwareDrones == 0:
+        if numberOfSoftwareDrones == 0:
             droneOrder[masterDroneIndex] = self.masterDrone
-
-            for index in range(len(hardwareDrones)):
-                index = index + 1 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-                for drone in hardwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
+            droneOrder = self.__calculateDroneOrderByOneKindOfDrone(droneOrder, self.hardwareDrones, masterDroneIndex, startingLocations)
         elif numberOfHardwareDrones == 0:
             droneOrder[masterDroneIndex] = self.masterDrone
+            droneOrder = self.__calculateDroneOrderByOneKindOfDrone(droneOrder, self.softwareDrones, masterDroneIndex, startingLocations)
+        elif numberOfHardwareDrones == numberOfSoftwareDrones or numberOfHardwareDrones > numberOfSoftwareDrones:
+            if self.masterDroneIsHardware:
+                masterDroneIndex = masterDroneIndex * 2
+            else:
+                masterDroneIndex = masterDroneIndex * 2 + 1
 
-            for index in range(len(softwareDrones)):
-                index = index + 1 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-                for drone in softwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
+            droneOrder[masterDroneIndex] = self.masterDrone
+            droneOrder = self.__calculateDroneOrderByMultipleKindsOfDrones(droneOrder, self.hardwareDrones, masterDroneIndex, startingLocations, True)
+            droneOrder = self.__calculateDroneOrderByMultipleKindsOfDrones(droneOrder, self.softwareDrones, masterDroneIndex, startingLocations, False, 1)
         elif numberOfHardwareDrones < numberOfSoftwareDrones:
             if not self.masterDroneIsHardware:
-                droneOrder[masterDroneIndex * 2] = self.masterDrone
+                masterDroneIndex = masterDroneIndex * 2
             else:
-                droneOrder[masterDroneIndex * 2 + 1] = self.masterDrone
+                masterDroneIndex = masterDroneIndex * 2 + 1
 
-            for index in range(len(softwareDrones)):
-                index = index * 2
-                if not self.masterDroneIsHardware:
-                    index = index + 2 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-                for drone in softwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                softwareDrones = [drone for drone in softwareDrones if drone.droneId != closestDrone.droneId]
-
-            for index in range(len(hardwareDrones)):
-                index = index * 2 + 1
-                if self.masterDroneIsHardware:
-                    index = index + 2 if index >= masterDroneIndex else index
-                point = startingLocations[index]
-                shortestDistance = 0
-                closestDrone = None
-
-
-                for drone in hardwareDrones:
-                    distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
-                    if shortestDistance < distance or shortestDistance == 0:
-                        shortestDistance = distance
-                        closestDrone = drone
-
-                droneOrder[index] = closestDrone
-                hardwareDrones = [drone for drone in hardwareDrones if drone.droneId != closestDrone.droneId]
+            droneOrder[masterDroneIndex] = self.masterDrone
+            droneOrder = self.__calculateDroneOrderByMultipleKindsOfDrones(droneOrder, self.softwareDrones, masterDroneIndex, startingLocations, False)
+            droneOrder = self.__calculateDroneOrderByMultipleKindsOfDrones(droneOrder, self.hardwareDrones, masterDroneIndex, startingLocations, True, 1)
 
         self.drones = []
         sortedDroneOrder = sorted(droneOrder.keys())
         for drone in sortedDroneOrder:
             self.drones.append(droneOrder[drone])
+    
+    # Calculate the order for one kind of drone
+    def __calculateDroneOrderByOneKindOfDrone(self, droneOrder: {}, drones: [], masterDroneIndex: int, startingLocations = []) -> {}:
+        for index in range(len(drones)):
+            index = index + 1 if index >= masterDroneIndex else index
+            point = startingLocations[index]
+            shortestDistance = 0
+            closestDrone = None
+
+            for drone in drones:
+                distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                if shortestDistance < distance or shortestDistance == 0:
+                    shortestDistance = distance
+                    closestDrone = drone
+
+            droneOrder[index] = closestDrone
+            drones = [drone for drone in drones if drone.droneId != closestDrone.droneId]
+        return droneOrder
+
+    # Calculate the order for multiple kinds of drones
+    def __calculateDroneOrderByMultipleKindsOfDrones(self, droneOrder: {}, drones: [], masterDroneIndex: int, startingLocations = [], hardwareDrones: bool = False, positionAdder: int = 0) -> {}:
+        for index in range(len(drones)):
+            index = index * 2 + positionAdder
+            if self.masterDroneIsHardware == hardwareDrones:
+                index = index + 2 if index >= masterDroneIndex else index
+            point = startingLocations[index]
+            shortestDistance = 0
+            closestDrone = None
+
+            for drone in drones:
+                distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                if shortestDistance < distance or shortestDistance == 0:
+                    shortestDistance = distance
+                    closestDrone = drone
+
+            droneOrder[index] = closestDrone
+            drones = [drone for drone in drones if drone.droneId != closestDrone.droneId]
+        return droneOrder

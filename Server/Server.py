@@ -12,6 +12,7 @@ from Server.Logger.Level import Level
 from Server.Gui.Gui import Gui, State
 from rich.live import Live
 
+# The id's of the drones
 idMaster = 'E7E7E7E700'
 idOne = 'E7E7E7E701'
 idTwo = 'E7E7E7E702'
@@ -22,6 +23,7 @@ idFive = '5'
 logging.basicConfig(level=logging.INFO)
 
 class Server:
+    # Institiate all the classes
     def __init__(self):
         self.logger = Logger(Level.Info)
         self.gui = Gui()
@@ -31,12 +33,14 @@ class Server:
         self.listener = keyboard.Listener(on_press = self.on_press)
         self.key = None
 
+    # Start the server
     def start(self) -> None:
         self.logger.addGui(self.gui)
         self.logger.info("Start")
         cflib.crtp.init_drivers()
         self.listener.start()
 
+        # Create all drones and add them to the neede classes
         # droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
         # self.swarm.addHardwareDrone(droneMaster)
         # self.gps.addDrone(droneMaster)
@@ -76,6 +80,7 @@ class Server:
         self.swarm.addSoftwareDrone(droneEight)
         self.socket.addSoftwareDrone(droneEight)
 
+        # Start all services
         # self.gps.start()
         self.socket.start()
         self.swarm.start()
@@ -95,6 +100,7 @@ class Server:
 
         running = True
 
+        # Start running the GUI
         with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
             while running:
                 self.gui.key = self.key
@@ -104,11 +110,11 @@ class Server:
                     if self.swarm.isConnected():
                         self.gui.state = State.Actions
 
-                if self.gui.action != None:
+                if self.gui.action != Action.Null:
                     self.swarm.action = self.gui.action
-                    self.gui.action = None
+                    self.gui.action = Action.Null
 
-                if self.swarm.action == None and self.gui.state == State.FlyingOperations:
+                if self.swarm.action == Action.Null and self.gui.state == State.FlyingOperations:
                     self.gui.state = State.Actions
 
                 running = self.gui.update()

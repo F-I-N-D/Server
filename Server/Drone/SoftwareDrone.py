@@ -22,6 +22,7 @@ class SoftwareDrone(Drone):
     def disconnect(self) -> None:
         super().disconnect()
 
+    # Kill the drone by resetting all his velocity values and set flying and connected to False
     def kill(self, message: str) -> None:
         super().kill(message)
         self.velocityX = 0
@@ -32,6 +33,7 @@ class SoftwareDrone(Drone):
         self.connected = False
         self.enableConnect = False
 
+    # Save data on data callback
     def dataCallback(self, data) -> None:
         for variableName in data:
             if variableName == "batteryVoltage":
@@ -63,6 +65,7 @@ class SoftwareDrone(Drone):
 
         super().dataCallback(data)
 
+    # Take off to predefined height
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
         if not super().takeOff(height, velocity):
             return False
@@ -70,6 +73,7 @@ class SoftwareDrone(Drone):
         self.locationZ = height
         return True
 
+    # Land by resetting variables
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
         super().land(velocity)
         self.velocityX = 0
@@ -86,6 +90,7 @@ class SoftwareDrone(Drone):
         self.velocityZ = 0
         self.newRate = 0
 
+    # Hove in the direction of the target by adjusting the velocity
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)
         self.velocityX = velocityX

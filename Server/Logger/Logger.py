@@ -1,8 +1,9 @@
-from datetime import datetime
 import os
+from datetime import datetime
+from pathlib import Path
+
 from Server.Logger.Level import Level
 from Server.Gui.Gui import Gui
-from pathlib import Path
 
 class Logger:
     # Start logger and create file to save logs in
@@ -38,11 +39,11 @@ class Logger:
         if self.level <= Level.Critical:
             self.__writeLog("CRITICAL", message, droneId)
 
-    # Add gui to the logger to display the logging on the gui
+    # Add GUI to the logger to display the logging on the GUI
     def addGui(self, gui: Gui):
         self.gui = gui
 
-    # Write log with color codes for the gui
+    # Write log with color codes for the GUI
     def __writeLog(self, level: str, message: str, droneId: str = None):
         currentDatetime = datetime.now().strftime("%H:%M:%S,%f")
 
@@ -65,7 +66,7 @@ class Logger:
             self.__writeToFile(f"[{currentDatetime}][{level}] {message}")
             self.__writeToGui(f"[[green]{currentDatetime}[/green]][[{textStyling}]{level}[/{textStyling}]] {message}")
 
-    # Log the log to the gui
+    # Log the log to the GUI
     def __writeToGui(self, message: str):
         if self.gui:
             self.gui.logs.append(message)

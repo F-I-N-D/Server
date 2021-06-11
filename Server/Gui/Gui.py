@@ -22,7 +22,7 @@ console = Console()
 
 class Gui:
     def __init__(self):
-        self.generateLayout()
+        self.__generateLayout()
         self.state = State.Connect
         self.buttonSelected = 0
         self.buttonPressed = False
@@ -32,13 +32,13 @@ class Gui:
         self.logs = []
         self.terminalLines = os.get_terminal_size().lines
 
-    # Update the gui by checkinf for inputs and refreshing the screen
+    # Update the GUI by checkinf for inputs and refreshing the screen
     def update(self) -> bool:
-        self.checkInput()
+        self.__checkInput()
 
-        self.layout["header"].update(self.generateHeaderGrid())
-        self.layout["logger"].update(self.generateLoggerArea())
-        self.layout["buttons"].update(self.generateButtonArea())
+        self.layout["header"].update(self.__generateHeaderGrid())
+        self.layout["logger"].update(self.__generateLoggerArea())
+        self.layout["buttons"].update(self.__generateButtonArea())
 
         if self.buttonPressed:
             if self.state == State.Connect:
@@ -74,7 +74,7 @@ class Gui:
         return True
 
     # Generate GUI layout
-    def generateLayout(self):
+    def __generateLayout(self):
         self.layout = Layout(name = "root")
 
         self.layout.split(
@@ -84,7 +84,7 @@ class Gui:
         )
 
     # Generate haeader
-    def generateHeaderGrid(self) -> Panel:
+    def __generateHeaderGrid(self) -> Panel:
         grid = Table.grid(expand=True)
         grid.add_column(justify="center", ratio=1)
         grid.add_column(justify="right")
@@ -95,13 +95,13 @@ class Gui:
         return Panel(grid, style="white on blue")
 
     # Generate the logging area and fill it with logs
-    def generateLoggerArea(self) -> Panel:
+    def __generateLoggerArea(self) -> Panel:
         if len(self.logs) >= self.terminalLines - 8:
             self.logs = self.logs[len(self.logs) - (self.terminalLines - 10):]
         return Panel(Text.from_markup("\n".join(self.logs)), border_style="blue")
 
     # Generate the button area and display the correct buttons
-    def generateButtonArea(self) -> Layout:
+    def __generateButtonArea(self) -> Layout:
         layout = Layout(name = "buttons")
 
         if self.state == State.Connect:
@@ -164,7 +164,7 @@ class Gui:
         return layout
 
     # Check for inputs and change button on screen
-    def checkInput(self):
+    def __checkInput(self):
         if self.key == keyboard.Key.tab:
             self.buttonSelected += 1
             self.buttonSelected = 0 if self.buttonSelected >= self.buttons else self.buttonSelected

@@ -2,6 +2,8 @@ import logging
 import time
 import cflib.crtp
 from pynput import keyboard
+from rich.live import Live
+
 from Server.Swarm.Swarm import Swarm, Action
 from Server.GPS.GPS import GPS
 from Server.Socket.Socket import Socket
@@ -10,7 +12,6 @@ from Server.Drone.SoftwareDrone import SoftwareDrone
 from Server.Logger.Logger import Logger
 from Server.Logger.Level import Level
 from Server.Gui.Gui import Gui, State
-from rich.live import Live
 
 # The id's of the drones
 idMaster = 'E7E7E7E700'

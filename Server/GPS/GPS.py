@@ -1,8 +1,9 @@
 import time
-from threading import Thread
-from Server.Drone.HardwareDrone import HardwareDrone
-import numpy as np
 import cv2
+import numpy as np
+from threading import Thread
+
+from Server.Drone.HardwareDrone import HardwareDrone
 
 # Constants
 DEFAULT_LIGHT_AREA = 1

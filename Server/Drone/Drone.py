@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from Server.Logger.Logger import Logger
 
 # Constants

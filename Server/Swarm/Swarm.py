@@ -2,8 +2,8 @@ import operator
 import time
 import math
 import random
-from threading import Thread
 import numpy as np
+from threading import Thread
 
 from Server.Drone.Drone import Drone
 from Server.Drone.HardwareDrone import HardwareDrone
@@ -47,32 +47,33 @@ class Swarm(Thread):
     def run(self):
         self.__isRunnning = True
 
-        # Calcualte best places for all droens
-        self.calculateOptimalPlaces()
+        self.drones = self.softwareDrones + self.hardwareDrones + [self.masterDrone]
 
         while self.__isRunnning:
             # Preform action based on GUI option
             if self.action == Action.Connect:
                 self.logger.info("Connecting to all drones")
-                self.calculateOptimalPlaces()
+                self.__calculateOptimalPlaces()
                 self.connect()
                 self.action = Action.Null
             elif self.action == Action.Search:
                 self.logger.info("Starting search")
+                self.__calculateOptimalPlaces()
                 self.goal = Goal.Search
-                self.fly()
+                self.__fly()
                 self.action = Action.Null
                 self.logger.info("Search done")
             elif self.action == Action.Calibrate:
                 self.logger.info("Starting calibrate")
+                self.__calculateOptimalPlaces()
                 self.goal = Goal.Calibrate
-                self.fly()
+                self.__fly()
                 self.action = Action.Null
                 self.logger.info("Calibrate done")
             elif self.action == Action.Scatter:
                 self.logger.info("Starting scatter")
                 self.goal = Goal.Scatter
-                self.fly()
+                self.__fly()
                 self.action = Action.Null
                 self.logger.info("Scatter done")
             elif self.action == Action.Disconnect:
@@ -113,7 +114,7 @@ class Swarm(Thread):
         return True
 
     # Start flying
-    def fly(self) -> None:
+    def __fly(self) -> None:
         # Make all drones take off
         for drone in self.drones:
             drone.takeOff(DRONE_HEIGHT - MASTER_LOWER_HEIGHT if drone.master else DRONE_HEIGHT)
@@ -125,7 +126,7 @@ class Swarm(Thread):
 
         # Go to the starting position if the goal is search or calibrate
         if self.goal == Goal.Search or self.goal == Goal.Calibrate:
-            location = self.getStartingLocations()
+            location = self.__getStartingLocations()
             targetReached = False
             for index, drone in enumerate(self.drones):
                 drone.setTarget(location[index][0], location[index][1])
@@ -144,13 +145,13 @@ class Swarm(Thread):
         while self.goal != Goal.Null:
             # If target reached get the next location
             if self.goal == Goal.Search and targetReached:
-                location = self.getSearchLocations(itteration)
+                location = self.__getSearchLocations(itteration)
             elif self.goal == Goal.Calibrate and targetReached:
-                location = self.getCalibrateLocations(itteration)
+                location = self.__getCalibrateLocations(itteration)
             elif self.goal == Goal.Scatter and targetReached:
-                location = self.getScatterLocations(itteration)
+                location = self.__getScatterLocations(itteration)
             elif self.goal == Goal.FollowTarget and targetReached:
-                location = self.getCircleLocations(targetLocation[0], targetLocation[1])
+                location = self.__getCircleLocations(targetLocation[0], targetLocation[1])
 
             if targetReached:       
                 # if there are no new locations save the calibrate data if the drones are calibrating
@@ -173,29 +174,29 @@ class Swarm(Thread):
             # Check and adjust the speed fo all drones one for one
             for drone in self.drones:
                 # Adjust the speed
-                adjustmentVariables = self.collisionAdjust(drone)
+                adjustmentVariables = self.__collisionAdjust(drone)
                 drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
                 # If the drone is no longer seen by the camera then it will be killed
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
                     drone.kill("Drone is no longer seen by the GPS")
-                    self.removeDroneFromList(drone)
+                    self.__removeDroneFromList(drone)
                     continue
 
                 # If the drone trys to excape from the area it will be killed
                 if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
                     drone.kill("Tried to escape on x")
-                    self.removeDroneFromList(drone)
+                    self.__removeDroneFromList(drone)
                     continue
                 
                 if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
                     drone.kill("Tried to escape on y")
-                    self.removeDroneFromList(drone)
+                    self.__removeDroneFromList(drone)
                     continue
 
                 # If the drone is no longer connected it will be removed
                 if not drone.isConnected():
-                    self.removeDroneFromList(drone)
+                    self.__removeDroneFromList(drone)
                     continue
 
                 if not drone.targetReached and drone.isFlying:
@@ -235,12 +236,12 @@ class Swarm(Thread):
 
     # Calculate distance between drones
     @staticmethod
-    def calculateDistanceBetweenDrones(droneOne: Drone, droneTwo: Drone) -> int:
+    def __calculateDistanceBetweenDrones(droneOne: Drone, droneTwo: Drone) -> int:
         return math.sqrt(pow(droneOne.locationX - droneTwo.locationX, 2) + pow(droneOne.locationY - droneTwo.locationY, 2))
 
     # Calculate distance between drone and point
     @staticmethod
-    def calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
+    def __calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
         return math.sqrt(pow(drone.locationX - point[0], 2) + pow(drone.locationY - point[1], 2))
 
     # Land all drones
@@ -252,20 +253,20 @@ class Swarm(Thread):
     def disconnect(self):
         for drone in self.drones:
             drone.disconnect()
-            self.removeDroneFromList(drone)
+            self.__removeDroneFromList(drone)
             
     # Kill and remove all drones
     def kill(self):
         for drone in self.drones:
             drone.kill("Manual")
-            self.removeDroneFromList(drone)
+            self.__removeDroneFromList(drone)
 
     # Remove drone from the drone list
-    def removeDroneFromList(self, droneToRemove: Drone):
+    def __removeDroneFromList(self, droneToRemove: Drone):
         self.drones = [drone for drone in self.drones if drone.droneId != droneToRemove.droneId]
 
     # Get the starting coordinates for the drones
-    def getStartingLocations(self) -> []:
+    def __getStartingLocations(self) -> []:
         startCoordinates = []
         for index, drone in enumerate(self.drones):
             locationX = BORDER_WIDTH_X
@@ -274,9 +275,9 @@ class Swarm(Thread):
         return startCoordinates
 
     # Get the next calibration locations for the drones
-    def getCalibrateLocations(self, itteration: int) -> []:
+    def __getCalibrateLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
-        startCoordinates = self.getStartingLocations()
+        startCoordinates = self.__getStartingLocations()
         coordinates = []
 
         if itteration == 0:
@@ -305,9 +306,9 @@ class Swarm(Thread):
         return coordinates
 
     # Get the next search locations for the drones
-    def getSearchLocations(self, itteration: int) -> []:
+    def __getSearchLocations(self, itteration: int) -> []:
         numberOfDrones = len(self.drones)
-        startCoordinates = self.getStartingLocations()
+        startCoordinates = self.__getStartingLocations()
         coordinates = []
         step = itteration % 2
 
@@ -352,7 +353,7 @@ class Swarm(Thread):
         return coordinates
 
     # Get the next circle locations for the drones
-    def getCircleLocations(self, locationX: int, locationY: int) -> []:
+    def __getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
 
         DegreesPerDrone = 360 / droneAmmount
@@ -372,7 +373,7 @@ class Swarm(Thread):
         return resultArray
 
     # Get the scatter locations for the drones
-    def getScatterLocations(self, itteration: int) -> []:
+    def __getScatterLocations(self, itteration: int) -> []:
         if itteration > 0:
             return []
 
@@ -385,11 +386,11 @@ class Swarm(Thread):
         return scatterLocations
         
     # If the drones almost collide move them around each other
-    def collisionAdjust(self, drone1: Drone) -> []:
+    def __collisionAdjust(self, drone1: Drone) -> []:
         collisionDistance = 0
         adjustmentVariables = [0, 0]
         for drone2 in self.drones:
-            collisionDistance = self.calculateDistanceBetweenDrones(drone1, drone2)
+            collisionDistance = self.__calculateDistanceBetweenDrones(drone1, drone2)
             if(collisionDistance < 100):
                 if((drone1.locationX - drone2.locationX) < 0):
                     #move to back
@@ -410,9 +411,9 @@ class Swarm(Thread):
         return adjustmentVariables
 
     # Calculate the optimal place for the drones so they have to travel as little as possible on startup
-    def calculateOptimalPlaces(self) -> None:
+    def __calculateOptimalPlaces(self) -> None:
         self.drones = self.softwareDrones + self.hardwareDrones + [self.masterDrone]
-        startingLocations = self.getStartingLocations()
+        startingLocations = self.__getStartingLocations()
         softwareDrones = self.softwareDrones
         hardwareDrones = self.hardwareDrones
 
@@ -477,7 +478,7 @@ class Swarm(Thread):
             closestDrone = None
 
             for drone in drones:
-                distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                distance = self.__calculateDistanceBetweenDroneAndPoint(drone, point)
                 if shortestDistance < distance or shortestDistance == 0:
                     shortestDistance = distance
                     closestDrone = drone
@@ -497,7 +498,7 @@ class Swarm(Thread):
             closestDrone = None
 
             for drone in drones:
-                distance = self.calculateDistanceBetweenDroneAndPoint(drone, point)
+                distance = self.__calculateDistanceBetweenDroneAndPoint(drone, point)
                 if shortestDistance < distance or shortestDistance == 0:
                     shortestDistance = distance
                     closestDrone = drone

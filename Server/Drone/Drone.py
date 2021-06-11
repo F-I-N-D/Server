@@ -60,7 +60,7 @@ class Drone(ABC):
 
     @abstractmethod
     def connect(self) -> None:
-        self.logger.info("Connect", self.droneId)
+        self.logger.debug("Connect", self.droneId)
 
     @abstractmethod
     def isConnected(self) -> bool:
@@ -68,7 +68,7 @@ class Drone(ABC):
 
     @abstractmethod
     def disconnect(self) -> None:
-        self.logger.info("Disconnect", self.droneId)
+        self.logger.debug("Disconnect", self.droneId)
 
     def logData(self) -> None:
         self.logger.debug(f"Battery: {self.batteryVoltage}V", self.droneId)
@@ -109,7 +109,7 @@ class Drone(ABC):
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> bool:
         self.logData()
-        self.logger.info(f"Taking off to {height}", self.droneId)
+        self.logger.debug(f"Taking off to {height}", self.droneId)
         if self.batteryVoltage < 3.5 and self.batteryVoltage > 0.0:
             self.logger.warning("Battery low", self.droneId)
             self.disconnect()
@@ -118,7 +118,7 @@ class Drone(ABC):
 
     @abstractmethod
     def land(self, velocity: float) -> None:
-        self.logger.info("Landing", self.droneId)
+        self.logger.debug("Landing", self.droneId)
         self.logData()
 
     @abstractmethod
@@ -174,7 +174,7 @@ class Drone(ABC):
         elif self.direction < -10:
             newRate = rate
 
-        self.move(velocityX+adjustX, velocityY+adjustY, 0, newRate)
+        self.move(velocityX + adjustX, velocityY + adjustY, 0, newRate)
 
     def setTarget(self, targetLocationX, targetLocationY):
         self.targetLocationX = targetLocationX

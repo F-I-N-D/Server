@@ -30,6 +30,7 @@ class SoftwareDrone(Drone):
         self.rate = 0
         self.isFlying = False
         self.connected = False
+        self.enableConnect = False
 
     def dataCallback(self, data) -> None:
         for variableName in data:

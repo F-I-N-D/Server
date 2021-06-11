@@ -6,4 +6,5 @@ class Action(enum.Enum):
     Calibrate = 21
     Scatter = 22
     Disconnect = 23
-    Kill = 30
+    Land = 30
+    Kill = 31

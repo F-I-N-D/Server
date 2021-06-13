@@ -7,15 +7,15 @@ from Server.Drone.HardwareDrone import HardwareDrone
 
 # Constants
 DEFAULT_LIGHT_AREA = 1
-CAMERA = 2
 VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 1920
 
 class GPS(Thread):
-    def __init__(self):
+    def __init__(self, camera: int):
         Thread.__init__(self)
         self.__isRunnning = False
         self.drones = []
+        self.camera = camera
 
     # Stop the thread
     def stop(self) -> None:
@@ -30,7 +30,7 @@ class GPS(Thread):
         self.__isRunnning = True
 
         # Setup video stream
-        cap = cv2.VideoCapture(CAMERA)
+        cap = cv2.VideoCapture(self.camera)
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)

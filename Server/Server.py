@@ -25,14 +25,15 @@ logging.basicConfig(level=logging.INFO)
 
 class Server:
     # Institiate all the classes
-    def __init__(self):
+    def __init__(self, camera: int, noGui: str):
         self.logger = Logger(Level.Info)
         self.gui = Gui()
-        self.gps = GPS()
+        self.gps = GPS(camera)
         self.socket = Socket(8000)
         self.swarm = Swarm(self.logger)
         self.listener = keyboard.Listener(on_press = self.on_press)
         self.key = None
+        self.noGui = noGui
 
     # Start the server
     def start(self) -> None:
@@ -82,45 +83,51 @@ class Server:
         self.socket.addSoftwareDrone(droneEight)
 
         # Start all services
-        # self.gps.start()
+        self.gps.start()
         self.socket.start()
         self.swarm.start()
 
-        # self.swarm.action = Action.Connect
+        if self.noGui:
+            self.swarm.action = Action.Connect
 
-        # while not self.swarm.isConnected():
-        #     print("Connecting...")
-        #     time.sleep(1)
+            while not self.swarm.isConnected():
+                print("Connecting...")
+                time.sleep(1)
 
-        # print("Connected")
+            print("Connected")
 
-        # self.swarm.action = Action.Search
+            if self.noGui == "serach":
+                self.swarm.action = Action.Search
+            elif self.noGui == "calibrate":
+                self.swarm.action = Action.Calibrate
+            elif self.noGui == "scatter":
+                self.swarm.action = Action.Scatter
 
-        # while True:
-        #     time.sleep(10)
+            while True:
+                time.sleep(10)
+        else:
+            running = True
 
-        running = True
+            # Start running the GUI
+            with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
+                while running:
+                    self.gui.key = self.key
+                    self.key = None
 
-        # Start running the GUI
-        with Live(self.gui.layout, auto_refresh=False, screen=True) as live:
-            while running:
-                self.gui.key = self.key
-                self.key = None
+                    if self.gui.state == State.Connecting:
+                        if self.swarm.isConnected():
+                            self.gui.state = State.Actions
 
-                if self.gui.state == State.Connecting:
-                    if self.swarm.isConnected():
+                    if self.gui.action != Action.Null:
+                        self.swarm.action = self.gui.action
+                        self.gui.action = Action.Null
+
+                    if self.swarm.action == Action.Null and self.gui.state == State.FlyingOperations:
                         self.gui.state = State.Actions
 
-                if self.gui.action != Action.Null:
-                    self.swarm.action = self.gui.action
-                    self.gui.action = Action.Null
-
-                if self.swarm.action == Action.Null and self.gui.state == State.FlyingOperations:
-                    self.gui.state = State.Actions
-
-                running = self.gui.update()
-                live.refresh()
-                time.sleep(0.1)
+                    running = self.gui.update()
+                    live.refresh()
+                    time.sleep(0.1)
 
         self.logger.info("End")
 

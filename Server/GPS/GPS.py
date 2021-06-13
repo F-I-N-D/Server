@@ -1,6 +1,7 @@
 import time
 import cv2
 import numpy as np
+import os
 from threading import Thread
 
 from Server.Drone.HardwareDrone import HardwareDrone
@@ -31,6 +32,8 @@ class GPS(Thread):
 
         # Setup video stream
         cap = cv2.VideoCapture(self.camera)
+        if cap is None or not cap.isOpened():
+            raise Exception("Camera index not valid")
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)

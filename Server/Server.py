@@ -1,3 +1,4 @@
+import sys
 import logging
 import time
 import cflib.crtp
@@ -25,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 
 class Server:
     # Institiate all the classes
-    def __init__(self, camera: int, noGui: str):
+    def __init__(self, droneFile: str, camera: int, noGui: str):
         self.logger = Logger(Level.Info)
         self.gui = Gui()
         self.gps = GPS(camera)
@@ -34,6 +35,7 @@ class Server:
         self.listener = keyboard.Listener(on_press = self.on_press)
         self.key = None
         self.noGui = noGui
+        self.droneFile = droneFile
 
     # Start the server
     def start(self) -> None:
@@ -42,45 +44,7 @@ class Server:
         cflib.crtp.init_drivers()
         self.listener.start()
 
-        # Create all drones and add them to the neede classes
-        # droneMaster = HardwareDrone(idMaster, self.logger, 'red', 'green', True)
-        # self.swarm.addHardwareDrone(droneMaster)
-        # self.gps.addDrone(droneMaster)
-        # self.socket.addHardwareDrone(droneMaster)
-
-        # droneOne = HardwareDrone(idOne, self.logger, 'green', 'blue')
-        # self.swarm.addHardwareDrone(droneOne)
-        # self.gps.addDrone(droneOne)
-        # self.socket.addHardwareDrone(droneOne)
-
-        # droneTwo = HardwareDrone(idTwo, self.logger, 'red', 'blue')
-        # self.swarm.addHardwareDrone(droneTwo)
-        # self.gps.addDrone(droneTwo)
-        # self.socket.addHardwareDrone(droneTwo)
-
-        droneThree = SoftwareDrone(idThree, self.logger, 'green', 'yellow')
-        self.swarm.addSoftwareDrone(droneThree)
-        self.socket.addSoftwareDrone(droneThree)
-
-        droneFour = SoftwareDrone(idFour, self.logger, 'blue', 'yellow')
-        self.swarm.addSoftwareDrone(droneFour)
-        self.socket.addSoftwareDrone(droneFour)
-
-        droneFive = SoftwareDrone(idFive, self.logger, 'red', 'yellow')
-        self.swarm.addSoftwareDrone(droneFive)
-        self.socket.addSoftwareDrone(droneFive)
-
-        droneSix = SoftwareDrone('6', self.logger, 'blue', 'yellow', True)
-        self.swarm.addSoftwareDrone(droneSix)
-        self.socket.addSoftwareDrone(droneSix)
-
-        droneSeven = SoftwareDrone('7', self.logger, 'blue', 'yellow')
-        self.swarm.addSoftwareDrone(droneSeven)
-        self.socket.addSoftwareDrone(droneSeven)
-
-        droneEight = SoftwareDrone('8', self.logger, 'blue', 'yellow')
-        self.swarm.addSoftwareDrone(droneEight)
-        self.socket.addSoftwareDrone(droneEight)
+        self.__setDrones()      
 
         # Start all services
         self.gps.start()
@@ -96,7 +60,7 @@ class Server:
 
             print("Connected")
 
-            if self.noGui == "serach":
+            if self.noGui == "search":
                 self.swarm.action = Action.Search
             elif self.noGui == "calibrate":
                 self.swarm.action = Action.Calibrate
@@ -137,3 +101,29 @@ class Server:
 
     def on_press(self, key):
         self.key = key
+
+    # Load all drones from the specified file
+    def __setDrones(self):
+        try:
+            f = open(self.droneFile, "r")
+        except:
+            raise Exception("Drone file does not exists")
+            sys.exit()
+
+        data = f.readlines()
+        for droneValue in data:
+            if droneValue.startswith("#"):
+                continue
+            
+            droneValue = droneValue.strip()
+            splittedValue = droneValue.split(',')
+
+            if splittedValue[0] == 'H':
+                drone = HardwareDrone(splittedValue[1], self.logger, splittedValue[2], splittedValue[3], splittedValue[4] == "True")
+                self.swarm.addHardwareDrone(drone)
+                self.gps.addDrone(drone)
+                self.socket.addHardwareDrone(drone)
+            elif splittedValue[0] == 'S':
+                drone = SoftwareDrone(splittedValue[1], self.logger, splittedValue[2], splittedValue[3], splittedValue[4] == "True")
+                self.swarm.addSoftwareDrone(drone)
+                self.socket.addSoftwareDrone(drone)

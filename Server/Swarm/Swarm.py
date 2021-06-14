@@ -244,6 +244,11 @@ class Swarm(Thread):
     def __calculateDistanceBetweenDroneAndPoint(drone: Drone, point: []) -> int:
         return math.sqrt(pow(drone.locationX - point[0], 2) + pow(drone.locationY - point[1], 2))
 
+    # Calculate distance between drone and point
+    @staticmethod
+    def __calculateDistanceBetweenPointAndPoint(pointOne: [], pointTwo: []) -> int:
+        return math.sqrt(pow(pointOne[0] - pointTwo[0], 2) + pow(pointOne[1] - pointTwo[1], 2))
+
     # Land all drones
     def land(self):
         for drone in self.drones:
@@ -380,7 +385,22 @@ class Swarm(Thread):
         for drone in self.drones:
             locationX = random.randint(BORDER_WIDTH_X, SCREEN_SIZE_X - BORDER_WIDTH_X)
             locationY = random.randint(BORDER_WIDTH_Y, SCREEN_SIZE_Y - BORDER_WIDTH_Y)
-            scatterLocations.append([locationX, locationY])
+            newLocation = [locationX, locationY]
+            scatterLocations.append(newLocation)
+
+        distance = 0
+        locationsAreFarApartEnough = False
+        while not locationsAreFarApartEnough:
+            locationsAreFarApartEnough = True
+            for locationOne in range(len(scatterLocations)):
+                for locationTwo in range(len(scatterLocations)):
+                    distance = self.__calculateDistanceBetweenPointAndPoint(scatterLocations[locationOne], scatterLocations[locationTwo])
+                    if distance < DRONE_DISTANCE and distance > 0:
+                        locationX = random.randint(BORDER_WIDTH_X, SCREEN_SIZE_X - BORDER_WIDTH_X)
+                        locationY = random.randint(BORDER_WIDTH_Y, SCREEN_SIZE_Y - BORDER_WIDTH_Y)
+                        scatterLocations[locationOne] = [locationX, locationY]
+                        locationsAreFarApartEnough = False
+
         return scatterLocations
         
     # If the drones almost collide move them around each other

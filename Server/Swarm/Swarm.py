@@ -4,6 +4,8 @@ import math
 import random
 import numpy as np
 from threading import Thread
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
 
 from Server.Drone.Drone import Drone
 from Server.Drone.HardwareDrone import HardwareDrone
@@ -57,14 +59,12 @@ class Swarm(Thread):
                 self.action = Action.Null
             elif self.action == Action.Search:
                 self.logger.info("Starting search")
-                self.__calculateOptimalPlaces()
                 self.goal = Goal.Search
                 self.__fly()
                 self.action = Action.Null
                 self.logger.info("Search done")
             elif self.action == Action.Calibrate:
                 self.logger.info("Starting calibrate")
-                self.__calculateOptimalPlaces()
                 self.goal = Goal.Calibrate
                 self.__fly()
                 self.action = Action.Null
@@ -75,6 +75,7 @@ class Swarm(Thread):
                 self.__fly()
                 self.action = Action.Null
                 self.logger.info("Scatter done")
+                self.__calculateOptimalPlaces()
             elif self.action == Action.Disconnect:
                 self.logger.info("Disconnecting to all drones")
                 self.disconnect()
@@ -468,38 +469,43 @@ class Swarm(Thread):
     
     # Calculate the order for one kind of drone
     def __calculateDroneOrderByOneKindOfDrone(self, droneOrder: {}, drones: [], masterDroneIndex: int, startingLocations = []) -> {}:
+        droneLocations = []
+        startingLocations.pop(masterDroneIndex)
+        for drone in drones:
+            droneLocations.append([drone.locationX, drone.locationY])
+
+        costMatrix = cdist(droneLocations, startingLocations, "sqeuclidean")
+        _, optionalLocation = linear_sum_assignment(costMatrix)
+        
         for index in range(len(drones)):
-            index = index + 1 if index >= masterDroneIndex else index
-            point = startingLocations[index]
-            shortestDistance = 0
-            closestDrone = None
-
-            for drone in drones:
-                distance = self.__calculateDistanceBetweenDroneAndPoint(drone, point)
-                if shortestDistance < distance or shortestDistance == 0:
-                    shortestDistance = distance
-                    closestDrone = drone
-
-            droneOrder[index] = closestDrone
-            drones = [drone for drone in drones if drone.droneId != closestDrone.droneId]
+            setIndex = index + 1 if index >= masterDroneIndex else index
+            droneOrder[setIndex] = drones[optionalLocation[index]]
+        
         return droneOrder
 
     # Calculate the order for multiple kinds of drones
     def __calculateDroneOrderByMultipleKindsOfDrones(self, droneOrder: {}, drones: [], masterDroneIndex: int, startingLocations = [], hardwareDrones: bool = False, positionAdder: int = 0) -> {}:
+        droneLocations = []
+
+        for drone in drones:
+            droneLocations.append([drone.locationX, drone.locationY])
+
+        newStartingLocations = []
+        for locationIndex in range(len(startingLocations)):
+            if masterDroneIndex == locationIndex:
+                continue
+            if positionAdder == 0 and locationIndex % 2 == 0:
+                newStartingLocations.append(startingLocations[locationIndex])
+            elif positionAdder == 1 and locationIndex % 2 == 1:
+                newStartingLocations.append(startingLocations[locationIndex])
+
+        costMatrix = cdist(droneLocations, newStartingLocations, "sqeuclidean")
+        _, optionalLocation = linear_sum_assignment(costMatrix)
+
         for index in range(len(drones)):
-            index = index * 2 + positionAdder
+            setIndex = index * 2 + positionAdder
             if self.masterDroneIsHardware == hardwareDrones:
-                index = index + 2 if index >= masterDroneIndex else index
-            point = startingLocations[index]
-            shortestDistance = 0
-            closestDrone = None
-
-            for drone in drones:
-                distance = self.__calculateDistanceBetweenDroneAndPoint(drone, point)
-                if shortestDistance < distance or shortestDistance == 0:
-                    shortestDistance = distance
-                    closestDrone = drone
-
-            droneOrder[index] = closestDrone
-            drones = [drone for drone in drones if drone.droneId != closestDrone.droneId]
+                setIndex = setIndex + 2 if setIndex >= masterDroneIndex else setIndex
+            droneOrder[setIndex] = drones[optionalLocation[index]]
+        
         return droneOrder

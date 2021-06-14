@@ -96,7 +96,7 @@ class Gui:
 
     # Generate the logging area and fill it with logs
     def __generateLoggerArea(self) -> Panel:
-        if len(self.logs) >= self.terminalLines - 8:
+        if len(self.logs) >= self.terminalLines - 10:
             self.logs = self.logs[len(self.logs) - (self.terminalLines - 10):]
         return Panel(Text.from_markup("\n".join(self.logs)), border_style="blue")
 

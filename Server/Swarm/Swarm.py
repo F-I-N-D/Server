@@ -51,7 +51,7 @@ class Swarm(Thread):
         while self.__isRunnning:
             # Preform action based on GUI option
             if self.action == Action.Connect:
-                self.logger.info("Connecting to all drones")
+                self.logger.info("Connecting to all drones MUHAHAHAH")
                 self.__calculateOptimalPlaces()
                 self.connect()
                 self.action = Action.Null

@@ -448,7 +448,7 @@ class Swarm(Thread):
         masterDistance = float(drone1.locationX - master.locationX)
         if masterDistance < 25:
             return 0.0
-        xAdjustment = (-0.03 * masterDistance) / 10
+        xAdjustment = (0.003 * masterDistance)
         return max(min(0.3, xAdjustment), -0.3)
 
     # Calculate the optimal place for the drones so they have to travel as little as possible on startup

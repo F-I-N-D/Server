@@ -1,5 +1,0 @@
-numpy
-cflib
-pynput
-rich
-opencv-python

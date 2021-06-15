@@ -137,7 +137,7 @@ class Drone(ABC):
         pass
 
     # Adjust the velocity based on the current location and the target
-    def adjust(self, adjustX: float = 0, adjustY: float = 0, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
+    def adjust(self, adjustX: float = 0.0, adjustY: float = 0.0, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
         differenceX = self.targetLocationX - self.locationX
         differenceY = self.targetLocationY - self.locationY
 

@@ -22,7 +22,7 @@ idThree = '3'
 idFour = '4'
 idFive = '5'
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 class Server:
     # Institiate all the classes

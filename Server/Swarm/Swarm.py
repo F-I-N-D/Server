@@ -174,9 +174,13 @@ class Swarm(Thread):
             
             # Check and adjust the speed fo all drones one for one
             for drone in self.drones:
+
                 # Adjust the speed
                 adjustmentVariables = self.__collisionAdjust(drone)
-                drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
+                if self.goal == Goal.Search and itteration > 0:
+                    drone.adjust(adjustmentVariables[0] + self.__lineAdjust(drone, self.masterDrone), adjustmentVariables[1])
+                else:
+                    drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
                 # If the drone is no longer seen by the camera then it will be killed
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
@@ -184,16 +188,16 @@ class Swarm(Thread):
                     self.__removeDroneFromList(drone)
                     continue
 
-                # If the drone trys to excape from the area it will be killed
-                if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
-                    drone.kill("Tried to escape on x")
-                    self.__removeDroneFromList(drone)
-                    continue
+                # # If the drone trys to excape from the area it will be killed
+                # if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
+                #     drone.kill("Tried to escape on x")
+                #     self.__removeDroneFromList(drone)
+                #     continue
                 
-                if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
-                    drone.kill("Tried to escape on y")
-                    self.__removeDroneFromList(drone)
-                    continue
+                # if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
+                #     drone.kill("Tried to escape on y")
+                #     self.__removeDroneFromList(drone)
+                #     continue
 
                 # If the drone is no longer connected it will be removed
                 if not drone.isConnected():
@@ -410,26 +414,42 @@ class Swarm(Thread):
     def __collisionAdjust(self, drone1: Drone) -> []:
         collisionDistance = 0
         adjustmentVariables = [0, 0]
+
+        xAdjustmentVariable = 0.0
+        yAdjustmentVariable = 0.0
+        adjustmentCounter = 0
+
         for drone2 in self.drones:
             collisionDistance = self.__calculateDistanceBetweenDrones(drone1, drone2)
             if(collisionDistance < 100):
+                adjustmentCounter = adjustmentCounter + 1
                 if((drone1.locationX - drone2.locationX) < 0):
                     #move to back
-                    adjustmentVariables[0] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1) / 10
+                    xAdjustmentVariable = xAdjustmentVariable + (-1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1) / 10)
                 if((drone1.locationX - drone2.locationX) > 0):
                     #move to front
-                    adjustmentVariables[0] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    xAdjustmentVariable = xAdjustmentVariable + ((1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
                 if((drone1.locationY - drone2.locationY) < 0): 
                     #move to left
-                    adjustmentVariables[1] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    yAdjustmentVariable = yAdjustmentVariable + (-1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
                 if((drone1.locationY - drone2.locationY) > 0): 
                     #move to right
-                    adjustmentVariables[1] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    yAdjustmentVariable = yAdjustmentVariable + ((1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
+
+        adjustmentVariables[0] = xAdjustmentVariable / adjustmentCounter
+        adjustmentVariables[1] = yAdjustmentVariable / adjustmentCounter
 
         adjustmentVariables[0] = max(min(0.5, adjustmentVariables[0]), -0.5)
         adjustmentVariables[1] = max(min(0.5, adjustmentVariables[1]), -0.5)
-        adjustmentVariables = [0, 0]
         return adjustmentVariables
+
+    # Adjust flight speed to stay in line with master
+    def __lineAdjust(self, drone1: Drone, master: Drone) -> float:
+        masterDistance = float(drone1.locationX - master.locationX)
+        if masterDistance < 25:
+            return 0.0
+        xAdjustment = (-0.03 * masterDistance) / 10
+        return max(min(0.3, xAdjustment), -0.3)
 
     # Calculate the optimal place for the drones so they have to travel as little as possible on startup
     def __calculateOptimalPlaces(self) -> None:

@@ -174,9 +174,13 @@ class Swarm(Thread):
             
             # Check and adjust the speed fo all drones one for one
             for drone in self.drones:
+
                 # Adjust the speed
                 adjustmentVariables = self.__collisionAdjust(drone)
-                drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
+                if self.goal == Goal.Search:
+                    drone.adjust(drone.adjust(adjustmentVariables[0] + self.__lineAdjust(drone, masterDrone), adjustmentVariables[1]))
+                else:
+                    drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
                 # If the drone is no longer seen by the camera then it will be killed
                 if drone.framesNotSeen >= MAX_AMOUNT_OF_FRAMES_NOT_SEEN:
@@ -430,6 +434,12 @@ class Swarm(Thread):
         adjustmentVariables[1] = max(min(0.5, adjustmentVariables[1]), -0.5)
         adjustmentVariables = [0, 0]
         return adjustmentVariables
+
+    # Adjust flight speed to stay in line with master
+    def __lineAdjust(self, drone1: Drone, master: Drone) -> float:
+        masterDistance = drone1.locationX - master.locationX
+        xAdjustment = -0.03 * masterDistance
+        return xAdjustment
 
     # Calculate the optimal place for the drones so they have to travel as little as possible on startup
     def __calculateOptimalPlaces(self) -> None:

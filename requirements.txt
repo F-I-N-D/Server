@@ -3,3 +3,4 @@ cflib
 pynput
 rich
 opencv-python
+scipy

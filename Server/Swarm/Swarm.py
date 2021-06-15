@@ -14,6 +14,7 @@ from Server.Swarm.Goal import Goal
 DRONE_HEIGHT = 50
 MASTER_LOWER_HEIGHT = 15
 DRONE_DISTANCE = 100
+DRONE_DISTANCE_CIRCLE = 120
 BORDER_WIDTH_X = 300
 BORDER_WIDTH_Y = 200
 SCREEN_SIZE_X = 1920
@@ -407,9 +408,11 @@ class Swarm(Thread):
 
     def getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
-        vector = np.array([DEFAULT_CIRCLE_RADIUS, 0])
-        centerPoint = np.array([locationX, locationY])
-        degreesPerDrone = 360 / numberOfDrones
+
+        DegreesPerDrone = 360 / droneAmmount
+        radius = DRONE_DISTANCE_CIRCLE/np.tan(math.radians(DegreesPerDrone))
+        vector = np.array([radius, 0])
+        centerPoint = np.array([xStart, yStart])
 
         resultArray = []
         for droneItterator in range(numberOfDrones):

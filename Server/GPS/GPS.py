@@ -1,31 +1,46 @@
+import os
+import sys
 import time
-from threading import Thread
-from Server.Drone.HardwareDrone import HardwareDrone
-import numpy as np
 import cv2
+import numpy as np
+from threading import Thread
 
+from Server.Drone.HardwareDrone import HardwareDrone
+
+# Constants
 DEFAULT_LIGHT_AREA = 1
+VIDEO_WIDTH = 1920
+VIDEO_HEIGHT = 1920
 
 class GPS(Thread):
-    def __init__(self):
+    def __init__(self, camera: int):
         Thread.__init__(self)
         self.__isRunnning = False
         self.drones = []
+        self.camera = camera
 
+    # Stop the thread
     def stop(self) -> None:
         self.__isRunnning = False
 
+    # Add a drone to the GPS
     def addDrone(self, drone: HardwareDrone) -> None:
         self.drones.append(drone)
 
+    # Start the thread
     def run(self):
         self.__isRunnning = True
 
-        cap = cv2.VideoCapture(2)
+        # Setup video stream
+        cap = cv2.VideoCapture(self.camera)
+        if cap is None or not cap.isOpened():
+            raise Exception("Camera index not valid")
+            sys.exit()
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)
 
+        # Keep the thread running until it is stopped
         while True and self.__isRunnning:
             flag, imageFrame = cap.read()
 
@@ -103,13 +118,15 @@ class GPS(Thread):
                         if(abs(colorList[idx][0] - colorList[nestedIdx][0]) <= 30 and abs(colorList[idx][1] - colorList[nestedIdx][1]) <= 30 and colorList[idx][2] != colorList[nestedIdx][2] and idx != nestedIdx):
                             possibleDrones.append([colorList[idx],colorList[nestedIdx]])
 
+                # Set the location of the seen drones
+                # If the drone is not seen increment theFramesNotSeen variable
                 for dronecolor in self.drones:
                     droneSeen = False
                     for drone in possibleDrones:
                         if(drone[0][2] == dronecolor.colorFront and drone[1][2] == dronecolor.colorBack):
                             dronex = int((drone[0][0] + drone[1][0]) / 2)
                             droney = int((drone[0][1] + drone[1][1]) / 2)
-                            dronedir = np.arctan2(drone[1][1]-drone[0][1],drone[1][0]-drone[0][0]) * 180 / np.pi
+                            dronedir = int(np.arctan2(drone[1][1]-drone[0][1],drone[1][0]-drone[0][0]) * 180 / np.pi)
 
                             dronecolor.locationX = dronex
                             dronecolor.locationY = droney
@@ -117,7 +134,7 @@ class GPS(Thread):
                             
                             droneSeen = True
 
-                    if droneSeen or not drone.isFlying:
+                    if droneSeen or not dronecolor.isFlying:
                         dronecolor.framesNotSeen = 0
                     else:
                         dronecolor.framesNotSeen += 1

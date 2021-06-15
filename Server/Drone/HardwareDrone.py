@@ -1,8 +1,9 @@
-from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_RATE, DEFUALT_MASTER
 from cflib.crazyflie import Crazyflie
 from cflib.positioning.motion_commander import MotionCommander
 from cflib.crazyflie.log import LogConfig
 from cflib.utils.power_switch import PowerSwitch
+
+from Server.Drone.Drone import Drone, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_RATE, DEFUALT_MASTER
 from Server.Logger.Logger import Logger
 
 class HardwareDrone(Drone):
@@ -26,14 +27,15 @@ class HardwareDrone(Drone):
             self.log_conf.add_variable('range.left', 'uint16_t')
             self.log_conf.add_variable('range.right', 'uint16_t')
 
+    # Connect to the drone by opening crazyflie link
     def connect(self) -> None:
         super().connect()
         self.crazyflie.open_link(self.droneId)
 
+    # Check if the drone is connected and connect the logger if it is connected
     def isConnected(self) -> bool:
         super().isConnected()
         if self.crazyflie.is_connected():
-            self.logger.info("Connected", self.droneId)
             self.addLogger()
 
         return self.crazyflie.is_connected()
@@ -42,15 +44,19 @@ class HardwareDrone(Drone):
         super().disconnect()
         self.crazyflie.close_link()
 
+    # Kill the drone by shutting of the power
     def kill(self, message: str) -> None:
         super().kill(message)
         self.powerSwitch.stm_power_down()
+        self.disconnect()
 
+    # Add a logger and his callback
     def addLogger(self) -> None:
         self.crazyflie.log.add_config(self.log_conf)
         self.log_conf.data_received_cb.add_callback(self.dataCallback)
         self.log_conf.start()
 
+    # Save data on data callback
     def dataCallback(self, timestamp, data, logconf) -> None:
         self.batteryVoltage = data['pm.vbat']
         self.isCharging = True if data['pm.state'] == 1 else False
@@ -64,17 +70,18 @@ class HardwareDrone(Drone):
         self.ldr = data['ExternalSensors.LDR']
 
         if self.master:
-            self.distanceFront = data['range.front']
-            self.distanceBack = data['range.back']
-            self.distanceLeft = data['range.left']
-            self.distanceRight = data['range.right']
+            self.distanceFront = int(data['range.front'] / 10)
+            self.distanceBack = int(data['range.back'] / 10)
+            self.distanceLeft = int(data['range.left'] / 10)
+            self.distanceRight = int(data['range.right'] / 10)
 
         super().dataCallback(data)
 
+    # Take off to predefined height
     def takeOff(self, height: float = DEFAULT_HEIGHT, velocity: float = DEFAULT_VELOCITY) -> bool:
         if not super().takeOff(height, velocity):
-            self.motionCommander.take_off(height / 10, velocity)
             return False
+        self.motionCommander.take_off(height / 100, velocity)
         return True
 
     def land(self, velocity: float = DEFAULT_VELOCITY) -> None:
@@ -85,6 +92,7 @@ class HardwareDrone(Drone):
         super().stop()
         self.motionCommander.stop()
 
+    # Hove in the direction of the target by adjusting the velocity
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         super().move(velocityX, velocityY, velocityZ, rate)
         self.motionCommander._set_vel_setpoint(velocityX, velocityY, velocityZ, rate)

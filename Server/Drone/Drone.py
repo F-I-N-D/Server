@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
+
 from Server.Logger.Logger import Logger
 
+# Constants
 DEFAULT_VELOCITY = 0.5
 DEFAULT_MIN_VELOCITY = 0.1
 DEFAULT_RATE = 22
 DEFAULT_HEIGHT = 0.4
 DEFUALT_MASTER = False
 
+# Switcher for color conversion
 switcher = {
     'white': '#FFFFFF',
     'red': '#FF0000',
@@ -47,8 +50,8 @@ class Drone(ABC):
         self.distanceLeft = 0
         self.distanceRight = 0
 
-        self.ldr = 0
-        self.ldrMax = 0
+        self.ldr = 0.0
+        self.ldrMax = 0.0
 
         self.framesNotSeen = 0
 
@@ -60,7 +63,7 @@ class Drone(ABC):
 
     @abstractmethod
     def connect(self) -> None:
-        self.logger.info("Connect", self.droneId)
+        self.logger.debug("Connect", self.droneId)
 
     @abstractmethod
     def isConnected(self) -> bool:
@@ -68,8 +71,9 @@ class Drone(ABC):
 
     @abstractmethod
     def disconnect(self) -> None:
-        self.logger.info("Disconnect", self.droneId)
+        self.logger.debug("Disconnect", self.droneId)
 
+    # Log all data of the drone
     def logData(self) -> None:
         self.logger.debug(f"Battery: {self.batteryVoltage}V", self.droneId)
         self.logger.debug(f"Is charging: {self.isCharging}", self.droneId)
@@ -90,11 +94,13 @@ class Drone(ABC):
         self.logger.debug(f"z: {self.locationZ}", self.droneId)
         self.logger.debug(f"direction: {self.direction}", self.droneId)
 
+    # Kill the drone if it is going to crash
     @abstractmethod
     def kill(self, message: str) -> None:
         self.logger.critical(f"Killed: {message}", self.droneId)
         self.logData()
 
+    # Data callback that runs when data is recieved
     @abstractmethod
     def dataCallback(self, data) -> None:
         if self.isTumbled:
@@ -106,10 +112,11 @@ class Drone(ABC):
             self.kill("Battery low", self.droneId)
             self.disconnect()
 
+    # Take off if the battery is full enough
     @abstractmethod
     def takeOff(self, height: float, velocity: float) -> bool:
         self.logData()
-        self.logger.info(f"Taking off to {height}", self.droneId)
+        self.logger.debug(f"Taking off to {height}", self.droneId)
         if self.batteryVoltage < 3.5 and self.batteryVoltage > 0.0:
             self.logger.warning("Battery low", self.droneId)
             self.disconnect()
@@ -118,7 +125,7 @@ class Drone(ABC):
 
     @abstractmethod
     def land(self, velocity: float) -> None:
-        self.logger.info("Landing", self.droneId)
+        self.logger.debug("Landing", self.droneId)
         self.logData()
 
     @abstractmethod
@@ -129,6 +136,7 @@ class Drone(ABC):
     def move(self, velocityX: float, velocityY: float, velocityZ: float, rate: float) -> None:
         pass
 
+    # Adjust the velocity based on the current location and the target
     def adjust(self, adjustX: float = 0, adjustY: float = 0, velocity: float = DEFAULT_VELOCITY, minVelocity: float = DEFAULT_MIN_VELOCITY, rate: float = DEFAULT_RATE):
         differenceX = self.targetLocationX - self.locationX
         differenceY = self.targetLocationY - self.locationY
@@ -174,8 +182,9 @@ class Drone(ABC):
         elif self.direction < -10:
             newRate = rate
 
-        self.move(velocityX+adjustX, velocityY+adjustY, 0, newRate)
+        self.move(velocityX + adjustX, velocityY + adjustY, 0, newRate)
 
+    # Set the target of the drone
     def setTarget(self, targetLocationX, targetLocationY):
         self.targetLocationX = targetLocationX
         self.targetLocationY = targetLocationY

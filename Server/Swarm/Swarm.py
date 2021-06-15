@@ -362,10 +362,10 @@ class Swarm(Thread):
     def __getCircleLocations(self, locationX: int, locationY: int) -> []:
         numberOfDrones = len(self.drones)
 
-        DegreesPerDrone = 360 / droneAmmount
-        radius = DRONE_DISTANCE_CIRCLE/np.tan(math.radians(DegreesPerDrone))
+        degreesPerDrone = 360 / numberOfDrones
+        radius = DRONE_DISTANCE_CIRCLE/np.tan(math.radians(degreesPerDrone))
         vector = np.array([radius, 0])
-        centerPoint = np.array([xStart, yStart])
+        centerPoint = np.array([locationX, locationY])
 
         resultArray = []
         for droneItterator in range(numberOfDrones):

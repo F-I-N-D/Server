@@ -414,25 +414,33 @@ class Swarm(Thread):
     def __collisionAdjust(self, drone1: Drone) -> []:
         collisionDistance = 0
         adjustmentVariables = [0, 0]
+
+        xAdjustmentVariable = 0.0
+        yAdjustmentVariable = 0.0
+        adjustmentCounter = 0
+
         for drone2 in self.drones:
             collisionDistance = self.__calculateDistanceBetweenDrones(drone1, drone2)
             if(collisionDistance < 100):
+                adjustmentCounter = adjustmentCounter + 1
                 if((drone1.locationX - drone2.locationX) < 0):
                     #move to back
-                    adjustmentVariables[0] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1) / 10
+                    xAdjustmentVariable = xAdjustmentVariable + (-1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1) / 10)
                 if((drone1.locationX - drone2.locationX) > 0):
                     #move to front
-                    adjustmentVariables[0] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    xAdjustmentVariable = xAdjustmentVariable + ((1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
                 if((drone1.locationY - drone2.locationY) < 0): 
                     #move to left
-                    adjustmentVariables[1] = -1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    yAdjustmentVariable = yAdjustmentVariable + (-1 * (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
                 if((drone1.locationY - drone2.locationY) > 0): 
                     #move to right
-                    adjustmentVariables[1] = (1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10
+                    yAdjustmentVariable = yAdjustmentVariable + ((1.1487 ** (abs(drone1.locationX - drone2.locationX)) - 1)  / 10)
+
+        adjustmentVariables[0] = xAdjustmentVariable / adjustmentCounter
+        adjustmentVariables[1] = yAdjustmentVariable / adjustmentCounter
 
         adjustmentVariables[0] = max(min(0.5, adjustmentVariables[0]), -0.5)
         adjustmentVariables[1] = max(min(0.5, adjustmentVariables[1]), -0.5)
-        adjustmentVariables = [0, 0]
         return adjustmentVariables
 
     # Adjust flight speed to stay in line with master

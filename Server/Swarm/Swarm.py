@@ -177,8 +177,8 @@ class Swarm(Thread):
 
                 # Adjust the speed
                 adjustmentVariables = self.__collisionAdjust(drone)
-                if self.goal == Goal.Search:
-                    drone.adjust(drone.adjust(adjustmentVariables[0] + self.__lineAdjust(drone, masterDrone), adjustmentVariables[1]))
+                if self.goal == Goal.Search and itteration > 0:
+                    drone.adjust(adjustmentVariables[0] + self.__lineAdjust(drone, self.masterDrone), adjustmentVariables[1])
                 else:
                     drone.adjust(adjustmentVariables[0], adjustmentVariables[1])
 
@@ -188,16 +188,16 @@ class Swarm(Thread):
                     self.__removeDroneFromList(drone)
                     continue
 
-                # If the drone trys to excape from the area it will be killed
-                if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
-                    drone.kill("Tried to escape on x")
-                    self.__removeDroneFromList(drone)
-                    continue
+                # # If the drone trys to excape from the area it will be killed
+                # if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
+                #     drone.kill("Tried to escape on x")
+                #     self.__removeDroneFromList(drone)
+                #     continue
                 
-                if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
-                    drone.kill("Tried to escape on y")
-                    self.__removeDroneFromList(drone)
-                    continue
+                # if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
+                #     drone.kill("Tried to escape on y")
+                #     self.__removeDroneFromList(drone)
+                #     continue
 
                 # If the drone is no longer connected it will be removed
                 if not drone.isConnected():
@@ -437,9 +437,11 @@ class Swarm(Thread):
 
     # Adjust flight speed to stay in line with master
     def __lineAdjust(self, drone1: Drone, master: Drone) -> float:
-        masterDistance = drone1.locationX - master.locationX
-        xAdjustment = -0.03 * masterDistance
-        return xAdjustment
+        masterDistance = float(drone1.locationX - master.locationX)
+        if masterDistance < 25:
+            return 0.0
+        xAdjustment = (-0.03 * masterDistance) / 10
+        return max(min(0.3, xAdjustment), -0.3)
 
     # Calculate the optimal place for the drones so they have to travel as little as possible on startup
     def __calculateOptimalPlaces(self) -> None:

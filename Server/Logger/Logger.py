@@ -53,7 +53,7 @@ class Logger:
         elif level == "ERROR":
             textStyling = "red"
         elif level == "WARNING":
-            textStyling = "orange"
+            textStyling = "orange1"
         elif level == "INFO":
             textStyling = "bright_green"
         elif level == "DEBUG":

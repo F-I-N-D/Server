@@ -214,7 +214,7 @@ class Swarm(Thread):
 
                 # If goal is search check if the target is found
                 if self.goal == Goal.Search:
-                    if drone.ldr > drone.ldrMax * 1.1 and drone.ldrMax != 0:
+                    if drone.ldr > drone.ldrMax * 1.1 and drone.ldrMax != 0 and drone.locationX != 0 and drone.locationY != 0:
                         self.goal = Goal.FollowTarget
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]
@@ -412,6 +412,7 @@ class Swarm(Thread):
         
     # If the drones almost collide move them around each other
     def __collisionAdjust(self, drone1: Drone) -> []:
+        return [0,0]
         collisionDistance = 0
         adjustmentVariables = [0, 0]
 

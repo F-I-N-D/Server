@@ -22,6 +22,9 @@ class SoftwareDrone(Drone):
     def disconnect(self) -> None:
         super().disconnect()
 
+    def restartLogger(self):
+        pass
+
     # Kill the drone by resetting all his velocity values and set flying and connected to False
     def kill(self, message: str) -> None:
         super().kill(message)

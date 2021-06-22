@@ -18,7 +18,7 @@ from Server.Logger.Logger import Logger
 DRONE_HEIGHT = 80
 MASTER_LOWER_HEIGHT = 0
 DRONE_DISTANCE = 100
-DRONE_DISTANCE_CIRCLE = 120
+DRONE_DISTANCE_CIRCLE = 200
 BORDER_WIDTH_X = 300
 BORDER_WIDTH_Y = 200
 SCREEN_SIZE_X = 1920
@@ -188,17 +188,6 @@ class Swarm(Thread):
                     self.__removeDroneFromList(drone)
                     continue
 
-                # # If the drone trys to excape from the area it will be killed
-                # if drone.locationX < (BORDER_WIDTH_X / 4) or drone.locationX > (SCREEN_SIZE_X - (BORDER_WIDTH_X / 4)):
-                #     drone.kill("Tried to escape on x")
-                #     self.__removeDroneFromList(drone)
-                #     continue
-                
-                # if drone.locationY < (BORDER_WIDTH_Y / 4) or drone.locationY > (SCREEN_SIZE_Y - (BORDER_WIDTH_Y / 4)):
-                #     drone.kill("Tried to escape on y")
-                #     self.__removeDroneFromList(drone)
-                #     continue
-
                 # If the drone is no longer connected it will be removed
                 if not drone.isConnected():
                     self.__removeDroneFromList(drone)
@@ -215,9 +204,11 @@ class Swarm(Thread):
                 # If goal is search check if the target is found
                 if self.goal == Goal.Search:
                     if drone.ldr > drone.ldrMax * 1.1 and drone.ldrMax != 0 and drone.locationX != 0 and drone.locationY != 0:
+                        self.logger.info(f"Target found on location [{drone.locationX}, {drone.locationY}]", drone.droneId)
                         self.goal = Goal.FollowTarget
                         targetReached = True
                         targetLocation = [drone.locationX, drone.locationY]
+                        break
 
                 # The master drone will check if the swarm is almost bumping into something
                 if drone.master:
@@ -271,9 +262,15 @@ class Swarm(Thread):
             drone.kill("Manual")
             self.__removeDroneFromList(drone)
 
+    # Restart all loggers
+    def __restartLoggers(self):
+        for drone in self.drones:
+            drone.restartLogger()
+
     # Remove drone from the drone list
     def __removeDroneFromList(self, droneToRemove: Drone):
         self.drones = [drone for drone in self.drones if drone.droneId != droneToRemove.droneId]
+        self.__restartLoggers()
 
     # Get the starting coordinates for the drones
     def __getStartingLocations(self) -> []:
@@ -412,7 +409,6 @@ class Swarm(Thread):
         
     # If the drones almost collide move them around each other
     def __collisionAdjust(self, drone1: Drone) -> []:
-        return [0,0]
         collisionDistance = 0
         adjustmentVariables = [0, 0]
 
@@ -422,7 +418,7 @@ class Swarm(Thread):
 
         for drone2 in self.drones:
             collisionDistance = self.__calculateDistanceBetweenDrones(drone1, drone2)
-            if(collisionDistance < 100):
+            if(collisionDistance < 80):
                 adjustmentCounter = adjustmentCounter + 1
                 if((drone1.locationX - drone2.locationX) < 0):
                     #move to back

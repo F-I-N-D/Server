@@ -13,7 +13,7 @@ class HardwareDrone(Drone):
         self.powerSwitch = PowerSwitch(self.droneId)
         self.motionCommander = MotionCommander(self.crazyflie)
 
-        self.log_conf = LogConfig(name='data', period_in_ms = 50)
+        self.log_conf = LogConfig(name='data', period_in_ms = 100)
         self.log_conf.add_variable('pm.vbat', 'float')
         self.log_conf.add_variable('pm.state', 'int8_t')
         self.log_conf.add_variable('sys.isFlying', 'uint8_t')
@@ -36,6 +36,7 @@ class HardwareDrone(Drone):
     def isConnected(self) -> bool:
         super().isConnected()
         if self.crazyflie.is_connected():
+            self.crazyflie.log.add_config(self.log_conf)
             self.addLogger()
 
         return self.crazyflie.is_connected()
@@ -49,12 +50,20 @@ class HardwareDrone(Drone):
         super().kill(message)
         self.powerSwitch.stm_power_down()
         self.disconnect()
+        print("killed", message, self.droneId)
+
+    def restartLogger(self):
+        self.removeLogger()
+        self.addLogger()
 
     # Add a logger and his callback
     def addLogger(self) -> None:
-        self.crazyflie.log.add_config(self.log_conf)
         self.log_conf.data_received_cb.add_callback(self.dataCallback)
         self.log_conf.start()
+
+    # Add a logger and his callback
+    def removeLogger(self) -> None:
+        self.log_conf.data_received_cb.remove_callback(self.dataCallback)
 
     # Save data on data callback
     def dataCallback(self, timestamp, data, logconf) -> None:
@@ -68,6 +77,7 @@ class HardwareDrone(Drone):
         self.locationZ = int(data['range.zrange'] / 10)
 
         self.ldr = data['ExternalSensors.LDR']
+        print(self.droneId, self.ldr)
 
         if self.master:
             self.distanceFront = int(data['range.front'] / 10)

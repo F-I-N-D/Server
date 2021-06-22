@@ -109,7 +109,7 @@ class Drone(ABC):
             self.kill("Charging")
 
         if self.batteryVoltage < 2.8 and self.batteryVoltage > 0.0:
-            self.kill("Battery low", self.droneId)
+            self.kill("Battery low")
             self.disconnect()
 
     # Take off if the battery is full enough
@@ -130,6 +130,10 @@ class Drone(ABC):
 
     @abstractmethod
     def stop(self) -> None:
+        pass
+
+    @abstractmethod
+    def restartLogger(self) -> None:
         pass
 
     @abstractmethod

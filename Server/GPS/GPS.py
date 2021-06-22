@@ -10,7 +10,7 @@ from Server.Drone.HardwareDrone import HardwareDrone
 # Constants
 DEFAULT_LIGHT_AREA = 1
 VIDEO_WIDTH = 1920
-VIDEO_HEIGHT = 1920
+VIDEO_HEIGHT = 1080
 
 class GPS(Thread):
     def __init__(self, camera: int):

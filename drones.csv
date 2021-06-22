@@ -1,10 +1,10 @@
 #Type,Id,ColorFront,ColorBack,Master
-H,E7E7E7E700,red,green,True
+H,E7E7E7E700,red,green,False
 H,E7E7E7E701,green,blue,False
 H,E7E7E7E702,red,blue,False
-S,3,green,yellow,False
+S,3,green,yellow,True
 S,4,red,yellow,False
 S,5,blue,yellow,False
-#S,6,green,magenta,True
+#S,6,green,magenta,False
 #S,7,red,magenta,False
 #S,8,blue,magenta,False
